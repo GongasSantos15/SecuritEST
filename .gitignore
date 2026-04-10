@@ -10,3 +10,9 @@
 
 # Ignorar logs do sistema
 .terraform.lock.hcl
+
+# Node / Frontend
+node_modules/
+dist/
+.env
+.env.local
