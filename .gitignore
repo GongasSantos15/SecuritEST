@@ -1,0 +1,12 @@
+# Ignorar pastas de cache do Terraform
+.terraform/
+
+# Ignorar o estado da infraestrutura (contém segredos e é local)
+*.tfstate
+*.tfstate.backup
+
+# Ignorar ficheiros de variáveis sensíveis
+*.tfvars
+
+# Ignorar logs do sistema
+.terraform.lock.hcl
