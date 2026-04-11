@@ -26,38 +26,33 @@ resource "azurerm_cosmosdb_account" "db" {
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
   offer_type          = "Standard"
-  kind                = "GlobalDocumentDB" # NoSQL
-
+  kind                = "GlobalDocumentDB"
   consistency_policy {
     consistency_level = "Session"
   }
-
   geo_location {
     location          = azurerm_resource_group.rg.location
     failover_priority = 0
   }
 }
 
-# Criação do plano e da Azure Function com Docker
 # Plano de serviço para alojar a Function e a Web App
 resource "azurerm_service_plan" "plan" {
   name                = "plan-securitest"
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
   os_type             = "Linux"
-  sku_name            = "B1" # Económico para estudantes
+  sku_name            = "B1"
 }
 
 # A Azure Function que vai correr o Docker
 resource "azurerm_linux_function_app" "scanner_func" {
-  name                = "func-scanner-${random_string.suffix.result}"
-  resource_group_name = azurerm_resource_group.rg.name
-  location            = azurerm_resource_group.rg.location
-
+  name                       = "func-scanner-${random_string.suffix.result}"
+  resource_group_name        = azurerm_resource_group.rg.name
+  location                   = azurerm_resource_group.rg.location
   storage_account_name       = azurerm_storage_account.storage.name
   storage_account_access_key = azurerm_storage_account.storage.primary_access_key
   service_plan_id            = azurerm_service_plan.plan.id
-
   site_config {
     application_stack {
       docker {
@@ -78,23 +73,16 @@ resource "azurerm_linux_web_app" "frontend" {
 
   site_config {
     application_stack {
-      # Como vais usar HTML/JS do Figma, uma stack de PHP ou Node serve perfeitamente
-      node_version = "18-lts" 
+      node_version = "18-lts"
     }
     always_on = false
+    app_command_line = "npx serve -s /home/site/wwwroot -l 8080"
   }
 
   app_settings = {
-    "WEBSITE_RUN_FROM_PACKAGE" = "1"
+    "WEBSITES_PORT"                = "8080"
+    "WEBSITE_NODE_DEFAULT_VERSION" = "~18"
   }
-}
-
-# Liga o Frontend ao repositório GitHub automaticamente
-resource "azurerm_source_control" "frontend_sc" {
-  app_id                 = azurerm_linux_web_app.frontend.id
-  repo_url               = "https://github.com/GongasSantos15/SecuritEST"
-  branch                 = "main"
-  use_manual_integration = false
 }
 
 # Output para saberes o URL do teu site no fim
