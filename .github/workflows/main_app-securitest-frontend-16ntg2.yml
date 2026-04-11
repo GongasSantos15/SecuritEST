@@ -1,8 +1,4 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
 name: Build and deploy Node.js app to Azure Web App
-
 on:
   push:
     branches:
@@ -12,6 +8,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
     steps:
       - uses: actions/checkout@v4
 
@@ -22,10 +22,8 @@ jobs:
 
       - name: Install and Build
         run: |
-          cd frontend
           npm install
           npm run build
-          # Truque: Copiamos o package.json para a pasta dist para o Azure saber o que fazer
           cp package.json dist/
 
       - name: Upload artifact for deployment job
@@ -40,7 +38,6 @@ jobs:
     permissions:
       id-token: write
       contents: read
-
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
@@ -54,7 +51,7 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_A992EB224F1D454992B1514604649275 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_EB61FD7C6DB24AC58D8B90E3FB9814AE }}
 
-      - name: 'Deploy to Azure Web App'
+      - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
