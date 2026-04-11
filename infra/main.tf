@@ -83,6 +83,18 @@ resource "azurerm_linux_web_app" "frontend" {
     }
     always_on = false
   }
+
+  app_settings = {
+    "WEBSITE_RUN_FROM_PACKAGE" = "1"
+  }
+}
+
+# Liga o Frontend ao repositório GitHub automaticamente
+resource "azurerm_source_control" "frontend_sc" {
+  app_id                 = azurerm_linux_web_app.frontend.id
+  repo_url               = "https://github.com/GongasSantos15/SecuritEST"
+  branch                 = "main"
+  use_manual_integration = false
 }
 
 # Output para saberes o URL do teu site no fim
