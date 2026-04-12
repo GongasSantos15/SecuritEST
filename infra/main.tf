@@ -80,9 +80,11 @@ resource "azurerm_linux_web_app" "frontend" {
   }
 
   app_settings = {
-    "WEBSITES_PORT"                = "8080"
-    "WEBSITE_NODE_DEFAULT_VERSION" = "~18"
-  }
+  "WEBSITES_PORT"                = "8080"
+  "WEBSITE_NODE_DEFAULT_VERSION" = "~18"
+  "SCM_DO_BUILD_DURING_DEPLOYMENT" = "false"
+  "WEBSITE_RUN_FROM_PACKAGE"       = "0"
+}
 }
 
 # Output para saberes o URL do teu site no fim

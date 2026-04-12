@@ -61,3 +61,10 @@ jobs:
           app-name: 'app-securitest-frontend-16ntg2'
           slot-name: 'Production'
           package: ./app.zip
+
+      - name: Remove Azure default page
+        run: |
+          az webapp ssh \
+            --resource-group rg-securitest \
+            --name app-securitest-frontend-16ntg2 \
+            --command "rm -f /home/site/wwwroot/hostingstart.html"
