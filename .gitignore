@@ -4,6 +4,7 @@
 # Ignorar o estado da infraestrutura (contém segredos e é local)
 *.tfstate
 *.tfstate.backup
+*.tfstate.*
 
 # Ignorar ficheiros de variáveis sensíveis
 *.tfvars
