@@ -61,6 +61,6 @@ jobs:
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'app-securitest-frontend-16ntg2'
+          app-name: 'app-securitest-frontend-1xyiu5'
           slot-name: 'Production'
           package: ./dist
