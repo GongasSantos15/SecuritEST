@@ -80,6 +80,22 @@ resource "azurerm_linux_web_app" "frontend" {
   }
 }
 
+# Dispara automaticamente um redeploy do frontend após o terraform apply
+resource "null_resource" "redeploy" {
+  triggers = {
+    always_run = timestamp()
+  }
+
+  provisioner "local-exec" {
+    command = <<EOT
+      git commit --allow-empty -m "redeploy after terraform apply"
+      git push
+    EOT
+  }
+
+  depends_on = [azurerm_linux_web_app.frontend]
+}
+
 # Output para saberes o URL do teu site no fim
 output "frontend_url" {
   value = azurerm_linux_web_app.frontend.default_hostname
