@@ -8,6 +8,10 @@ terraform {
 }
 
 provider "azurerm" {
-  features {} # Obrigatório para o Azure
+  features {
+    resource_group {
+      prevent_deletion_if_contains_resources = false
+    }
+  }
   subscription_id = "53e1db90-35fe-4f80-871e-bbe27f954730"
 }
