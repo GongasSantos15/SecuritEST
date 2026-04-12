@@ -14,10 +14,15 @@ resource "azurerm_storage_account" "storage" {
 }
 
 # Gerador de sufixo aleatório para garantir nomes únicos no Azure
+# O keepers garante que o sufixo nunca muda enquanto o resource group for o mesmo
 resource "random_string" "suffix" {
   length  = 6
   special = false
   upper   = false
+
+  keepers = {
+    resource_group = var.securitest
+  }
 }
 
 # Cria uma base de dados NoSQL (Azure CosmosDB) para guardar os resultados dos scans
