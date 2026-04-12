@@ -55,7 +55,7 @@ jobs:
         run: |
           az webapp config appsettings set \
             --resource-group rg-securitest \
-            --name app-securitest-frontend-16ntg2 \
+            --name app-securitest-frontend-1xyiu5 \
             --settings WEBSITE_DEFAULT_DOCUMENT="index.html"
 
       - name: Deploy to Azure Web App
