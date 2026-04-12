@@ -87,10 +87,8 @@ resource "null_resource" "redeploy" {
   }
 
   provisioner "local-exec" {
-    command = <<EOT
-      git commit --allow-empty -m "redeploy after terraform apply"
-      git push
-    EOT
+    command     = "git commit --allow-empty -m redeploy && git push"
+    interpreter = ["PowerShell", "-Command"]
   }
 
   depends_on = [azurerm_linux_web_app.frontend]
