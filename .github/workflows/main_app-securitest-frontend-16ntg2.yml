@@ -64,7 +64,7 @@ jobs:
 
       - name: Remove Azure default page
         run: |
-          az webapp ssh \
+          az webapp config set \
             --resource-group rg-securitest \
             --name app-securitest-frontend-16ntg2 \
-            --command "rm -f /home/site/wwwroot/hostingstart.html"
+            --startup-file "rm -f /home/site/wwwroot/hostingstart.html && npx serve -s /home/site/wwwroot -l 8080"
