@@ -87,7 +87,7 @@ resource "null_resource" "redeploy" {
   }
 
   provisioner "local-exec" {
-    command     = "git commit --allow-empty -m redeploy && git push"
+    command     = "git commit --allow-empty -m redeploy; git push"
     interpreter = ["PowerShell", "-Command"]
   }
 
