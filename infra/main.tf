@@ -288,3 +288,7 @@ output "container_fqdn" {
 output "function_url" {
   value = "https://${azurerm_linux_function_app.function.default_hostname}/api/function"
 }
+
+output "webapp_name" {
+  value = azurerm_linux_web_app.frontend.name
+}
