@@ -221,29 +221,29 @@ resource "azurerm_linux_web_app" "frontend" {
   location            = azurerm_resource_group.rg.location
   service_plan_id     = azurerm_service_plan.plan.id
 
-  https_only = true                                                 # Bloqueia acessos via HTTP normal. Redirecionado para HTTPS
+  https_only = true                                                         # Bloqueia acessos via HTTP normal. Redirecionado para HTTPS
 
   # Regras para a Azure Cloud Shell
   ftp_publish_basic_authentication_enabled       = true
   webdeploy_publish_basic_authentication_enabled = true
 
   site_config { 
-    minimum_tls_version = "1.2"                                     # Protocolo de encriptação modernos.
+    minimum_tls_version = "1.2"                                             # Protocolo de encriptação modernos.
 
     application_stack {
-      node_version = "18-lts"                                       # Versão do ambiente Node.js
+      node_version = "18-lts"                                               # Versão do ambiente Node.js
     } 
 
-    always_on        = false                                        # Por usar o nível gratuito, não há muito tráfego.
-    app_command_line = "npx serve -s /home/site/wwwroot -l 8080"    # Serve os ficheiros estáticos da pasta wwwroot
-                                                                    # -s -> Ativa o modo Single Page Application, React controla as rotas
-                                                                    # -l 8080 -> Obriga o site a correr na porta 8080.
+    always_on        = false                                                # Por usar o nível gratuito, não há muito tráfego.
+    app_command_line = "npx serve -s /home/site/wwwroot/frontend -l 8080"   # Serve os ficheiros estáticos da pasta wwwroot
+                                                                            # -s -> Ativa o modo Single Page Application, React controla as rotas
+                                                                            # -l 8080 -> Obriga o site a correr na porta 8080.
   }
 
   app_settings = {
-    "WEBSITES_PORT"                  = "8080"                       # Porta 8080 dentro do container
-    "WEBSITE_NODE_DEFAULT_VERSION"   = "~18"                        # Versão do Node.js
-    "SCM_DO_BUILD_DURING_DEPLOYMENT" = "false"                      # Devido ao envio da pasta dist e do npm run build, diz ao Azure para não compilar o código again
+    "WEBSITES_PORT"                  = "8080"                               # Porta 8080 dentro do container
+    "WEBSITE_NODE_DEFAULT_VERSION"   = "~18"                                # Versão do Node.js
+    "SCM_DO_BUILD_DURING_DEPLOYMENT" = "false"                              # Devido ao envio da pasta dist e do npm run build, diz ao Azure para não compilar o código again
     "WEBSITE_RUN_FROM_PACKAGE"       = "0"
   }
 }
