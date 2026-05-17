@@ -12,7 +12,7 @@ resource "azurerm_resource_group" "rg" {
 # Guarda logs e suporta o funcionamento da Azure Function
 # =========================================================
 resource "azurerm_storage_account" "storage" {
-  name                     = "stsecuritest${var.suffix}"
+  name                     = "stsecuritest${random_string.suffix.result}"
   resource_group_name      = azurerm_resource_group.rg.name
   location                 = azurerm_resource_group.rg.location
   account_tier             = "Standard"
@@ -26,7 +26,7 @@ resource "azurerm_storage_container" "reports" {
 }
 
 resource "azurerm_container_registry" "acr" {
-  name                = "securitestregistry${var.suffix}"
+  name                = "securitestregistry${random_string.suffix.result}"
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
   sku                 = "Basic"
@@ -40,7 +40,7 @@ resource "time_sleep" "wait_storage" {
 
 resource "azurerm_storage_account" "function_storage" {
   depends_on = [time_sleep.wait_storage]
-  name                     = "securitestfunc${var.suffix}"
+  name                     = "securitestfunc${random_string.suffix.result}"
   resource_group_name      = azurerm_resource_group.rg.name
   location                 = azurerm_resource_group.rg.location
   account_tier             = "Standard"
@@ -78,7 +78,7 @@ data "azurerm_storage_account_blob_container_sas" "function_sas" {
 # Base de dados NoSQL para guardar resultados dos scans
 # =========================================================
 resource "azurerm_cosmosdb_account" "cosmos" {
-  name                = "cosmos-securitest-${var.suffix}"
+  name                = "cosmos-securitest-${random_string.suffix.result}"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
   offer_type          = "Standard"
@@ -110,6 +110,15 @@ resource "azurerm_cosmosdb_sql_container" "container" {
   throughput          = 400
 }
 
+# =========================================================
+# SUFFIX
+# Gerar um sufixo aleatório
+# =========================================================
+resource "random_string" "suffix" {
+  length  = 5
+  special = false
+  upper   = false
+}
 
 # =========================================================
 # SERVICE PLAN
@@ -135,7 +144,7 @@ resource "azurerm_container_group" "scanner" {
   os_type             = "Linux"
 
   ip_address_type = "Public"
-  dns_name_label  = "securitest-${var.suffix}"
+  dns_name_label  = "securitest-${random_string.suffix.result}"
 
   container {
     name   = "scanner"
@@ -173,7 +182,7 @@ resource "azurerm_container_group" "scanner" {
 # - TLS 1.2
 # =========================================================
 resource "azurerm_linux_function_app" "function" {
-  name                       = "func-scanner-${var.suffix}"
+  name                       = "func-scanner-${random_string.suffix.result}"
   resource_group_name        = azurerm_resource_group.rg.name
   location                   = azurerm_resource_group.rg.location
   storage_account_name       = azurerm_storage_account.storage.name
@@ -207,7 +216,7 @@ resource "azurerm_linux_function_app" "function" {
 # - TLS 1.2
 # =========================================================
 resource "azurerm_linux_web_app" "frontend" {
-  name                = "app-securitest-frontend-${var.suffix}"
+  name                = "app-securitest-frontend-${random_string.suffix.result}"
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
   service_plan_id     = azurerm_service_plan.plan.id
@@ -257,7 +266,7 @@ resource "null_resource" "redeploy" {
 # SKU Standard já suporta esta arquitetura moderna
 # =========================================================
 resource "azurerm_cdn_frontdoor_profile" "fd_profile" {
-  name                = "fd-securitest-${var.suffix}"
+  name                = "fd-securitest-${random_string.suffix.result}"
   resource_group_name = azurerm_resource_group.rg.name
   sku_name            = "Standard_AzureFrontDoor"
 }
@@ -268,7 +277,7 @@ resource "azurerm_cdn_frontdoor_profile" "fd_profile" {
 # Este será o URL preferencial para demonstração
 # =========================================================
 resource "azurerm_cdn_frontdoor_endpoint" "fd_endpoint" {
-  name                     = "fd-endpoint-${var.suffix}"
+  name                     = "fd-endpoint-${random_string.suffix.result}"
   cdn_frontdoor_profile_id = azurerm_cdn_frontdoor_profile.fd_profile.id
 }
 
