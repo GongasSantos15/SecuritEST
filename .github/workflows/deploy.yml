@@ -23,6 +23,8 @@ jobs:
           cd frontend
           npm install
           npm run build
+        env:
+            VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
       - name: Enviar para o Azure App Service
         uses: azure/webapps-deploy@v3

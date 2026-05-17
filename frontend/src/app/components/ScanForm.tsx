@@ -1,26 +1,30 @@
 import { useState } from "react";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, AlertCircle } from "lucide-react";
 
 interface ScanFormProps {
-  onSubmit: (url: string) => void;
+  onSubmit: (url: string) => Promise<void>;
 }
 
 export function ScanForm({ onSubmit }: ScanFormProps) {
   const [url, setUrl] = useState("");
   const [isScanning, setIsScanning] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!url.trim()) return;
 
     setIsScanning(true);
+    setError(null);
 
-    // Simulate API scan
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    onSubmit(url);
-    setUrl("");
-    setIsScanning(false);
+    try {
+      await onSubmit(url.trim());
+      setUrl("");
+    } catch (err: any) {
+      setError(err.message ?? "Erro desconhecido ao realizar o scan.");
+    } finally {
+      setIsScanning(false);
+    }
   };
 
   return (
@@ -60,6 +64,13 @@ export function ScanForm({ onSubmit }: ScanFormProps) {
           )}
         </button>
       </form>
+
+      {error && (
+        <div className="mt-4 flex items-center gap-2 bg-red-500/20 border border-red-400/40 rounded-lg px-4 py-3 text-sm text-red-200">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          {error}
+        </div>
+      )}
     </div>
   );
 }
