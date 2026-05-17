@@ -261,67 +261,6 @@ resource "azurerm_linux_web_app" "frontend" {
 # }
 
 # =========================================================
-# ORIGIN GROUP
-# Grupo lógico de backends
-# =========================================================
-resource "azurerm_cdn_frontdoor_origin_group" "fd_origin_group" {
-  name                     = "fd-origin-group"
-  cdn_frontdoor_profile_id = azurerm_cdn_frontdoor_profile.fd_profile.id
-
-  session_affinity_enabled = false                                        # O utilizador pode ser enviado para qualquer instância do servidor sem problemas.
-                                                                          # Melhora a distribuição de carga.
-
-  load_balancing {
-    sample_size                 = 4                                       # O Azure olha para as últimas 4 tentativas de ligação.
-    successful_samples_required = 3                                       # Se 3/4 forem bem sucedidas, o Azure considera que o servidor está saudável.
-  }
-
-  health_probe {
-    interval_in_seconds = 100                                             # Front Door envia sinais constantes a cada 100 segundos
-    path                = "/"                                             # Tenta aceder à raiz do site
-    protocol            = "Https"                                         # Verificação é feita de forma segura
-    request_type        = "GET"                                           # Faz um pedido GET de leitura
-  }
-}
-
-# =========================================================
-# ORIGIN
-# A Web App é o backend real do Front Door
-# =========================================================
-resource "azurerm_cdn_frontdoor_origin" "fd_origin" {
-  name                          = "frontend-webapp-origin"
-  cdn_frontdoor_origin_group_id = azurerm_cdn_frontdoor_origin_group.fd_origin_group.id
-
-  enabled                        = true
-  host_name                      = azurerm_linux_web_app.frontend.default_hostname
-  http_port                      = 80                                                 # Porta padrão HTTP para comunicação entre o Front Door e a Web App
-  https_port                     = 443                                                # Porta padrão HTTPS para comunicação entre o Front Door e a Web App
-  origin_host_header             = azurerm_linux_web_app.frontend.default_hostname
-  priority                       = 1                                                  # Prioridade máxima
-  weight                         = 1000                                               # Peso máximo
-  certificate_name_check_enabled = true
-}
-
-# =========================================================
-# ROUTE
-# Encaminha o tráfego do Front Door para a Web App
-# =========================================================
-resource "azurerm_cdn_frontdoor_route" "fd_route" {
-  name                          = "frontend-route"
-  cdn_frontdoor_endpoint_id     = azurerm_cdn_frontdoor_endpoint.fd_endpoint.id
-  cdn_frontdoor_origin_group_id = azurerm_cdn_frontdoor_origin_group.fd_origin_group.id
-  cdn_frontdoor_origin_ids      = [azurerm_cdn_frontdoor_origin.fd_origin.id]
-
-  enabled                = true
-  forwarding_protocol    = "MatchRequest"                                                 # Usar o mesmo protocolo que o utilizador para comunicação entre Door e App
-  https_redirect_enabled = true                                                           # O utilizador acede via HTTP e redireciona-o para a versão HTTPS (segura)
-  patterns_to_match      = ["/*"]                                                         # Regra que diz "apanha tudo", qualquer caminho escrito é processado e enviado
-  supported_protocols    = ["Http", "Https"]
-
-  link_to_default_domain = true                                                           # Ativa a rota para o domínio padrão fornecido pelo Azure
-}
-
-# =========================================================
 # OUTPUTS
 # frontend_url   -> URL direta da Web App
 # frontdoor_url  -> URL protegida pelo Front Door + WAF
