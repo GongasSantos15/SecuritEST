@@ -5,7 +5,7 @@ import { ScanForm } from "./components/ScanForm";
 import { ScanHistoryCard, ScanData } from "./components/ScanHistoryCard";
 import { VulnerabilityCard } from "./components/VulnerabilityCard";
 import { RiskScoreGauge } from "./components/RiskScoreGauge";
-import { fetchScans, startScan, ScanResult } from "./services/api";
+import { fetchScans, startScan, ScanResult } from "../services/api";
 import {
   Activity,
   AlertTriangle,
