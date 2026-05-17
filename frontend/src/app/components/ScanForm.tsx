@@ -31,7 +31,7 @@ export function ScanForm({ onSubmit }: ScanFormProps) {
     <div className="bg-gradient-to-br from-[#1a2f4a] to-[#2d4a6b] rounded-xl p-8 border border-primary/30 text-white">
       <h2 className="text-white mb-2">Analyze API Security</h2>
       <p className="text-white/80 mb-6">
-        Submit an API endpoint URL for comprehensive security analysis
+        Submit an API endpoint URL for a comprehensive security analysis
       </p>
 
       <form onSubmit={handleSubmit} className="flex gap-3">
