@@ -254,7 +254,7 @@ resource "null_resource" "redeploy" {
 
   provisioner "local-exec" {
     command     = "git commit --allow-empty -m redeploy; git push"  # Cria um commit fantasma para registar uma atividade no histórico.
-    interpreter = ["PowerShell", "-Command"]                        # Por ser no Windows, usar o PowerShell para processar estes comandos.
+    interpreter = ["cmd", "/c"]                                     # Por ser no Windows, usar o CMD para processar estes comandos.
   }
 
   depends_on = [azurerm_linux_web_app.frontend]                     # Este commit só pode ocorrer depois de o Azure ter terminado de configurar a Web App.
