@@ -223,6 +223,10 @@ resource "azurerm_linux_web_app" "frontend" {
 
   https_only = true                                                 # Bloqueia acessos via HTTP normal. Redirecionado para HTTPS
 
+  # Regras para a Azure Cloud Shell
+  ftp_publish_basic_authentication_enabled       = true
+  webdeploy_publish_basic_authentication_enabled = true
+
   site_config { 
     minimum_tls_version = "1.2"                                     # Protocolo de encriptação modernos.
 
