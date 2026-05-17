@@ -247,39 +247,18 @@ resource "azurerm_linux_web_app" "frontend" {
 # =========================================================
 # REDEPLOY AUTOMÁTICO DO FRONTEND
 # =========================================================
-resource "null_resource" "redeploy" {
-  triggers = {
-    always_run = timestamp()                                        # Devolve a data e hora. Cada vez que se corre o terraform apply, este bloco é executado.
-  }
+# resource "null_resource" "redeploy" {
+#   triggers = {
+#     always_run = timestamp()                                        # Devolve a data e hora. Cada vez que se corre o terraform apply, este bloco é executado.
+#   }
 
-  provisioner "local-exec" {
-    command     = "git commit --allow-empty -m redeploy; git push"  # Cria um commit fantasma para registar uma atividade no histórico.
-    interpreter = ["cmd", "/c"]                                     # Por ser no Windows, usar o CMD para processar estes comandos.
-  }
+#   provisioner "local-exec" {
+#     command     = "git commit --allow-empty -m redeploy; git push"  # Cria um commit fantasma para registar uma atividade no histórico.
+#     interpreter = ["cmd", "/c"]                                     # Por ser no Windows, usar o CMD para processar estes comandos.
+#   }
 
-  depends_on = [azurerm_linux_web_app.frontend]                     # Este commit só pode ocorrer depois de o Azure ter terminado de configurar a Web App.
-}
-
-# =========================================================
-# AZURE FRONT DOOR PROFILE
-# Serviço global que fica à frente da Web App
-# SKU Standard já suporta esta arquitetura moderna
-# =========================================================
-resource "azurerm_cdn_frontdoor_profile" "fd_profile" {
-  name                = "fd-securitest-${random_string.suffix.result}"
-  resource_group_name = azurerm_resource_group.rg.name
-  sku_name            = "Standard_AzureFrontDoor"
-}
-
-# =========================================================
-# FRONT DOOR ENDPOINT
-# Hostname público do Front Door
-# Este será o URL preferencial para demonstração
-# =========================================================
-resource "azurerm_cdn_frontdoor_endpoint" "fd_endpoint" {
-  name                     = "fd-endpoint-${random_string.suffix.result}"
-  cdn_frontdoor_profile_id = azurerm_cdn_frontdoor_profile.fd_profile.id
-}
+#   depends_on = [azurerm_linux_web_app.frontend]                     # Este commit só pode ocorrer depois de o Azure ter terminado de configurar a Web App.
+# }
 
 # =========================================================
 # ORIGIN GROUP
@@ -349,10 +328,6 @@ resource "azurerm_cdn_frontdoor_route" "fd_route" {
 # =========================================================
 output "frontend_url" {
   value = azurerm_linux_web_app.frontend.default_hostname
-}
-
-output "frontdoor_url" {
-  value = azurerm_cdn_frontdoor_endpoint.fd_endpoint.host_name
 }
 
 output "acr_name" {
