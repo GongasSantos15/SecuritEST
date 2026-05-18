@@ -24,11 +24,19 @@ jobs:
           npm install
           npm run build
         env:
-            VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+
+      - name: Fazer zip apenas do dist
+        run: |
+          cd frontend/dist
+          zip -r ../../dist.zip .
+          echo "Conteúdo do zip:"
+          cd ../..
+          unzip -l dist.zip | head -20
 
       - name: Enviar para o Azure App Service
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: './frontend/dist'
+          package: './dist.zip'
