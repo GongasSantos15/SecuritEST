@@ -189,25 +189,35 @@ resource "azurerm_linux_function_app" "function" {
   storage_account_access_key = azurerm_storage_account.storage.primary_access_key
   service_plan_id            = azurerm_service_plan.plan.id
 
-  https_only = true                                                                 # Garante que a API da função só aceita HTTPS
+  https_only = true
 
   site_config {
-    minimum_tls_version = "1.2"                                                     # Padrão de encriptação moderno, ao rejeitar ligações de browsers ou ferramentas antigas
+    minimum_tls_version = "1.2"
 
-    # Função vai correr dentro de um dock container
+    cors {
+      allowed_origins     = ["*"]
+      support_credentials = false
+    }
+
     application_stack {
       docker {
-        registry_url = "https://index.docker.io"                                    # Imagem do Docker Hub
+        registry_url = "https://index.docker.io"
         image_name   = "securitest-scanner"
         image_tag    = "latest"
       }
     }
   }
+
   app_settings = {
     WEBSITE_RUN_FROM_PACKAGE = "${azurerm_storage_blob.function_zip.url}${data.azurerm_storage_account_blob_container_sas.function_sas.sas}"
     SCANNER_URL              = "http://${azurerm_container_group.scanner.fqdn}"
+    COSMOS_ENDPOINT          = azurerm_cosmosdb_account.cosmos.endpoint
+    COSMOS_KEY               = azurerm_cosmosdb_account.cosmos.primary_key
+    COSMOS_DATABASE          = azurerm_cosmosdb_sql_database.db.name
+    COSMOS_CONTAINER         = azurerm_cosmosdb_sql_container.container.name
   }
 }
+
 
 # =========================================================
 # FRONTEND WEB APP
