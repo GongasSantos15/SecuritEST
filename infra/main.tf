@@ -261,10 +261,10 @@ resource "azurerm_linux_web_app" "frontend" {
     "SCM_DO_BUILD_DURING_DEPLOYMENT" = "false"                              # Devido ao envio da pasta dist e do npm run build, diz ao Azure para não compilar o código again
     "WEBSITE_RUN_FROM_PACKAGE"       = "0"
     "SCANNER_URL"                    = "http://${azurerm_container_group.scanner.fqdn}"
-    "COSMOS_ENDPOINT"                = "azurerm_cosmosdb_account.cosmos.endpoint"
-    "COSMOS_KEY"                     = "azurerm_cosmosdb_account.cosmos.primary_key"
-    "COSMOS_DATABASE"                = "azurerm_cosmosdb_sql_database.db.name"
-    "COSMOS_CONTAINER"               = "azurerm_cosmosdb_sql_container.container.name"
+    "COSMOS_ENDPOINT"                = azurerm_cosmosdb_account.cosmos.endpoint
+    "COSMOS_KEY"                     = azurerm_cosmosdb_account.cosmos.primary_key
+    "COSMOS_DATABASE"                = azurerm_cosmosdb_sql_database.db.name
+    "COSMOS_CONTAINER"               = azurerm_cosmosdb_sql_container.container.name
   }
 }
 
