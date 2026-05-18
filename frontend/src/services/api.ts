@@ -23,9 +23,9 @@ export interface ScanResult {
 
 // ─── Listar todos os scans (GET) ─────────────────────────────────────────────
 export async function fetchScans(): Promise<ScanResult[]> {
-  const res = await fetch(API_URL, { method: "GET" });
-  if (!res.ok) throw new Error(`Erro ao carregar scans: ${res.status}`);
-  return res.json();
+  const response = await fetch(API_URL, { method: "GET" });
+  if (!response.ok) throw new Error(`Erro ao carregar scans: ${response.status}`);
+  return response.json();
 }
 
 // ─── Disparar novo scan (POST) ────────────────────────────────────────────────
