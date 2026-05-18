@@ -200,11 +200,7 @@ resource "azurerm_linux_function_app" "function" {
     }
 
     application_stack {
-      docker {
-        registry_url = "https://index.docker.io"
-        image_name   = "securitest-scanner"
-        image_tag    = "latest"
-      }
+      node_version = "18"
     }
   }
 
