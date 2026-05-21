@@ -48,17 +48,15 @@ function loadFromStorage(): { scans: ScanData[]; details: Record<string, ScanRes
   }
 }
 
-function toScanData(s: any): ScanData {
+function toScanData(s: ScanResult): ScanData {
   return {
-    id: s.id || "unknown",
-    // Usa o campo target_url da BD, com fallback
-    url: s.target_url || s.url || "URL não especificada",
-    // Tenta converter a data, se falhar, usa a data atual
-    timestamp: s.started_at ? new Date(s.started_at) : (s.timestamp ? new Date(s.timestamp) : new Date()),
-    // Garante que o número é válido
-    riskScore: typeof s.final_score === 'number' ? s.final_score : 0,
-    vulnerabilities: typeof s.findings_count === 'number' ? s.findings_count : 0,
-    status: s.status || "completed"
+    id: s.id,
+    url: s.target_url || "URL não especificada",
+    // Garante que o timestamp é tratado como data corretamente
+    timestamp: s.started_at ? new Date(s.started_at) : new Date(),
+    riskScore: s.final_score || 0,
+    vulnerabilities: s.findings_count || 0,
+    status: s.status
   };
 }
 
@@ -189,19 +187,20 @@ export default function App() {
           <div className="space-y-4">
             {Array.isArray(findings) ? (
               findings.map((f) => (
-                <VulnerabilityCard 
-                  key={f.id + f.endpoint} 
-                  vulnerability={{
-                    id: f.id, 
-                    title: f.name, // Ajuste para o campo 'name' que existe no JSON
-                    severity: f.severity > 5 ? "critical" : "medium", 
-                    category: f.category, 
-                    description: f.description || "", 
-                    endpoint: f.endpoint, 
-                    recommendation: f.recommendation
-                  }} 
-                />
-              ))
+                findings.map((f) => (
+                  <VulnerabilityCard 
+                    key={f.id + f.endpoint} 
+                    vulnerability={{
+                      id: f.id, 
+                      title: f.name, // Correção: o campo no JSON é 'name'
+                      severity: f.severity > 5 ? "critical" : "medium", 
+                      category: f.category, 
+                      description: f.description || "Sem descrição", 
+                      endpoint: f.endpoint, 
+                      recommendation: f.recommendation
+                    }} 
+                  />
+                ))
             ) : (
               <p className="text-muted-foreground italic">No vulnerabilities found.</p>
             )}
