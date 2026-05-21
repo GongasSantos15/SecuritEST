@@ -1,6 +1,6 @@
 const BASE_URL = import.meta.env.VITE_API_BASE_URL as string;
 
-const GET_SCANS_URL = `${BASE_URL}/api/GetScans`;
+const GET_SCANS_URL = `${BASE_URL}/api/scans`;
 const START_SCAN_URL = `${BASE_URL}/api/StartScan`;
 
 export interface Vulnerability {
