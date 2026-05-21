@@ -51,10 +51,10 @@ function loadFromStorage(): { scans: ScanData[]; details: Record<string, ScanRes
 function toScanData(s: ScanResult): ScanData {
   return {
     id: s.id,
-    url: s.url,
-    timestamp: new Date(s.timestamp),
-    riskScore: s.riskScore,
-    vulnerabilities: s.vulnerabilityCount ?? s.vulnerabilities?.length ?? 0,
+    url: s.target_url, // Mapeia target_url para url
+    timestamp: new Date(s.started_at), // Mapeia started_at para timestamp
+    riskScore: s.final_score, // Mapeia final_score para riskScore
+    vulnerabilities: s.findings_count, // Mapeia findings_count
     status: s.status
   };
 }
@@ -142,8 +142,8 @@ export default function App() {
 
   // ─── Vista detalhe ────────────────────────────────────────────────────────
   if (selectedScan) {
-    const detail = scanDetails[selectedScan.id];
-    const vulnerabilities = detail?.vulnerabilities ?? [];
+  const detail = scanDetails[selectedScan.id];
+  const vulnerabilities = detail?.findings ?? [];
 
     return (
       <div className="min-h-screen bg-background">
