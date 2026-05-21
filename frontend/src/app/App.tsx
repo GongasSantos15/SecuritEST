@@ -47,15 +47,15 @@ function loadFromStorage(): { scans: ScanData[]; details: Record<string, ScanRes
     return { scans: [], details: {} };
   }
 }
-function toScanData(s: any): ScanData {
+
+function toScanData(s: ScanResult): ScanData {
   return {
     id: s.id,
-    // Aqui usamos explicitamente os nomes que estão na sua BD
-    url: s.target_url || "URL não especificada", 
-    timestamp: s.started_at ? new Date(s.started_at) : new Date(),
-    riskScore: s.final_score ?? 0,
-    vulnerabilities: s.findings_count ?? 0,
-    status: s.status || "completed"
+    url: s.target_url,
+    timestamp: new Date(s.started_at),
+    riskScore: s.final_score,
+    vulnerabilities: s.findings_count,
+    status: s.status
   };
 }
 
@@ -71,16 +71,15 @@ export default function App() {
   setLoading(true);
   fetchScans()
     .then((results) => {
-      console.log("DEBUG: Dados recebidos da API:", results);
-
-      // FORÇAR ARRAY: Se results for o objeto único, envolvemo-lo num array []
+      // 1. Garante que é array
       const dataArray = Array.isArray(results) ? results : [results];
       
-      // Mapear
+      // 2. Mapeia para o formato que o componente ScanHistoryCard espera
       const fresh = dataArray.map(toScanData);
       setScans(fresh);
       
-      // Criar o mapa de detalhes com o objeto completo para a página de detalhes
+      // 3. CRUCIAL: Guarda o objeto original para a página de detalhes
+      // Aqui usamos o objeto 'item' original que vem da API
       const detailsMap: Record<string, any> = {};
       dataArray.forEach(item => { 
         detailsMap[item.id] = item; 
