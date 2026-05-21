@@ -160,6 +160,26 @@ export default function App() {
               </div>
             )}
           </div>
+          <div className="mt-8 bg-card border border-border rounded-lg p-6">
+          <h3 className="mb-4">About SecuritEST</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            SecuritEST is a cloud-native API security scanning platform built on Microsoft Azure.
+            It automatically analyzes exposed APIs, identifies potential vulnerabilities based on
+            OWASP API Security Top 10, and generates comprehensive risk reports.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            {[
+              { title: "Container-Based", desc: "Scalable scanning engine deployed in Azure Container Instances" },
+              { title: "Serverless Computing", desc: "Azure Functions handle request processing and report generation" },
+              { title: "NoSQL Storage", desc: "Cosmos DB stores scan history and vulnerability data at scale" }
+            ].map((item) => (
+              <div key={item.title} className="bg-accent rounded-lg p-4">
+                <h4 className="mb-2">{item.title}</h4>
+                <p className="text-muted-foreground">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
         </main>
       </div>
     );
