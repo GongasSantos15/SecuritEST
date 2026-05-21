@@ -51,10 +51,12 @@ function loadFromStorage(): { scans: ScanData[]; details: Record<string, ScanRes
 function toScanData(s: ScanResult): ScanData {
   return {
     id: s.id,
-    url: s.target_url || "URL não especificada", // s.target_url em vez de s.url
+    // Verifica se s.target_url existe no objeto que chega do Cosmos DB
+    url: s.target_url || "URL não especificada", 
     timestamp: s.started_at ? new Date(s.started_at) : new Date(),
-    riskScore: s.final_score || 0,             // s.final_score em vez de s.riskScore
-    vulnerabilities: s.findings_count || 0,     // s.findings_count em vez de s.vulnerabilities
+    // Garante que estas propriedades existem na interface ScanResult
+    riskScore: s.final_score ?? 0, 
+    vulnerabilities: s.findings_count ?? 0, 
     status: s.status
   };
 }
@@ -75,6 +77,7 @@ export default function App() {
       const dataArray = Array.isArray(results) ? results : (results.scans || []);
       
       const fresh = dataArray.map(toScanData);
+      console.log("Dados mapeados para o Dashboard:", fresh);
       setScans(fresh);
       
       const detailsMap: Record<string, ScanResult> = {};
