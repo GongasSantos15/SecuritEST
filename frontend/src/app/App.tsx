@@ -50,12 +50,13 @@ function loadFromStorage(): { scans: ScanData[]; details: Record<string, ScanRes
 
 function toScanData(s: any): ScanData {
   return {
+    // Usa o campo que vem do teu Cosmos DB
     id: s.id,
-    url: s.target_url || s.url,
-    timestamp: new Date(s.started_at || s.timestamp),
-    riskScore: s.final_score ?? s.riskScore ?? 0,
-    vulnerabilities: s.findings_count ?? s.vulnerabilities?.length ?? 0,
-    status: s.status
+    url: s.target_url || "URL não especificada",
+    timestamp: s.started_at ? new Date(s.started_at) : new Date(),
+    riskScore: s.final_score ?? 0,
+    vulnerabilities: s.findings_count ?? 0,
+    status: s.status || "completed"
   };
 }
 
