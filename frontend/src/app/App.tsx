@@ -183,27 +183,29 @@ export default function App() {
             </div>
           </div>
 
-          <h3 className="mb-4">Vulnerabilities Detected ({findings.length})</h3>
-          {/* Substitui este bloco inteiro */}
+          <h3 className="mb-4">Vulnerabilities Detected ({findings?.length || 0})</h3>
+          
           <div className="space-y-4">
-            {Array.isArray(findings) && findings.length > 0 ? (
-              findings.map((f) => (
+            {(() => {
+              if (!findings || findings.length === 0) {
+                return <p className="text-muted-foreground italic">No vulnerabilities found.</p>;
+              }
+              
+              return findings.map((f, index) => (
                 <VulnerabilityCard 
-                  key={f.id + f.endpoint} 
+                  key={`${f.id}-${index}`} 
                   vulnerability={{
                     id: f.id, 
-                    title: f.name,
-                    severity: f.severity > 5 ? "critical" : "medium", 
-                    category: f.category, 
-                    description: f.description || "Sem descrição", 
-                    endpoint: f.endpoint, 
-                    recommendation: f.recommendation
+                    title: f.name || "Unknown Vulnerability",
+                    severity: (f.severity > 5) ? "critical" : "medium",
+                    category: f.category || "General",
+                    description: f.description || "No description provided.",
+                    endpoint: f.endpoint,
+                    recommendation: f.recommendation || "No recommendation."
                   }} 
                 />
-              ))
-            ) : (
-              <p className="text-muted-foreground italic">No vulnerabilities found.</p>
-            )}
+              ));
+            })()}
           </div>
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
