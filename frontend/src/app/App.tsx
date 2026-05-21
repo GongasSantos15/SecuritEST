@@ -107,15 +107,18 @@ export default function App() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleNewScan = async (url: string) => {
-    try {
-      const result = await startScan(url);
-      const scanData = toScanData(result);
-      setScans((prev) => [scanData, ...prev]);
-      setScanDetails((prev) => ({ ...prev, [result.id]: result }));
-      setSelectedScan(scanData);
-    } catch (err) { alert("Falha ao iniciar scan."); }
-  };
+const handleNewScan = async (url: string) => {
+  try {
+    const result = await startScan(url);
+    const scanData = toScanData(result);
+    setScans((prev) => [scanData, ...prev]);
+    setScanDetails((prev) => ({ ...prev, [result.id]: result }));
+    setSelectedScan(scanData);
+  } catch (err: any) {
+    console.error("Erro detalhado:", err); // <--- VÊ ISTO NO F12 CONSOLE
+    alert("Falha ao iniciar o scan: " + err.message); // <--- VÊ A MENSAGEM AQUI
+  }
+};
 
   const totalVulnerabilities = scans.reduce((sum, s) => sum + s.vulnerabilities, 0);
   const avgRiskScore = scans.length ? Math.round(scans.reduce((sum, s) => sum + (Number(s.riskScore) || 0), 0) / scans.length) : 0;
