@@ -29,11 +29,17 @@ export async function fetchScans(): Promise<ScanResult[]> {
   try {
     const data = await safeFetch("scans");
     
-    // Se a API retornar o array diretamente, isto funcionará.
-    // Se a API devolver { "scans": [...] }, o .scans resolve.
-    return Array.isArray(data) ? data : (data.scans || []);
+    // LOG DE SEGURANÇA: Abre a consola (F12) e vê o que aparece aqui
+    console.log("Dados recebidos da API:", data); 
+
+    if (!data) return [];
+
+    // Tenta normalizar: se for um array, usa-o. Se for um objeto com uma propriedade de lista, usa-a.
+    const results = Array.isArray(data) ? data : (data.scans || Object.values(data));
+    
+    return results;
   } catch (err) {
-    console.error("Erro no fetchScans:", err);
+    console.error("Erro crítico no fetchScans:", err);
     return [];
   }
 }
