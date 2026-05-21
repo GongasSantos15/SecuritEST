@@ -1,25 +1,24 @@
 // No topo do ficheiro, guarde apenas a base, sem o caminho final
 const BASE_API_URL = import.meta.env.VITE_API_URL.replace(/\/api\/.*$/, "");
 
-export interface Vulnerability {
+export interface Finding {
   id: string;
-  title: string;
-  severity: "critical" | "high" | "medium" | "low";
+  name: string;
+  owasp: string;
+  endpoint: string;
+  severity: number;
+  recommendation: string;
   category: string;
   description: string;
-  endpoint?: string;
-  recommendation: string;
 }
-
 export interface ScanResult {
   id: string;
-  scan_id: string;
-  url: string;
-  timestamp: string;
+  target_url: string;
   status: "completed" | "in-progress" | "failed";
-  riskScore: number;
-  vulnerabilities: Vulnerability[];
-  vulnerabilityCount: number;
+  final_score: number;
+  findings: Finding[];
+  findings_count: number;
+  started_at: string;
 }
 
 // ─── Funções Exportadas ─────────────
