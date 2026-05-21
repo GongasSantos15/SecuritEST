@@ -67,26 +67,27 @@ export default function App() {
   useEffect(() => {
     const { scans: cached, details: cachedDetails } = loadFromStorage();
 
-    // Mostrar cache imediatamente enquanto carrega
+    // Mostrar cache imediatamente enquanto o fetch ocorre em background
     if (cached.length > 0) {
       setScans(cached);
       setScanDetails(cachedDetails);
-      setLoading(false);
     }
 
     fetchScans()
       .then((results) => {
-        if (results.length > 0) {
-          const fresh = results.map(toScanData);
-          const details: Record<string, ScanResult> = {};
-          results.forEach((r) => (details[r.id] = r));
-          setScans(fresh);
-          setScanDetails(details);
-          saveToStorage(fresh, details);
-        }
+        // 🚀 CORREÇÃO: Atualiza SEMPRE, mesmo que os results venham vazios.
+        // Assim, se limpares a BD do Cosmos, o site limpa a interface também.
+        const fresh = results.map(toScanData);
+        const details: Record<string, ScanResult> = {};
+        results.forEach((r) => (details[r.id] = r));
+        
+        setScans(fresh);
+        setScanDetails(details);
+        saveToStorage(fresh, details);
         setApiOffline(false);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("Falha ao comunicar com Cosmos DB:", err);
         setApiOffline(true);
       })
       .finally(() => setLoading(false));
@@ -107,6 +108,7 @@ export default function App() {
       setSelectedScan(scanData);
       setApiOffline(false);
     } catch (err: any) {
+      console.error("Erro no Scan:", err);
       // API inacessível — guardar localmente sem bloquear o utilizador
       const localId = `local_${Date.now()}`;
       const localResult: ScanResult = {
