@@ -170,5 +170,3 @@ export default function App() {
     </div>
   );
 }
-
-Tendo em conta este código diz-me só onde alterar no que vimos que funcionou anteriormente, não mudes mais nada, pois este código estava a funcionar
