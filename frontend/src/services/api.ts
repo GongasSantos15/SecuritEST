@@ -1,5 +1,5 @@
-// Define a base URL (tenta ler do env, se falhar usa o padrão do Azure)
-const API_BASE = import.meta.env.VITE_API_URL?.replace(/\/api\/.*$/, "") || "https://func-securitest-x7wdl.azurewebsites.net/api";
+// No topo do ficheiro, guarde apenas a base, sem o caminho final
+const BASE_API_URL = import.meta.env.VITE_API_URL.replace(/\/api\/.*$/, "");
 
 export interface Vulnerability {
   id: string;
@@ -32,20 +32,29 @@ async function safeFetch(endpoint: string, options: RequestInit = {}) {
 
 // ─── Funções Exportadas ─────────────
 export async function fetchScans(): Promise<ScanResult[]> {
-  try {
-    const data = await safeFetch("scans");
-    return Array.isArray(data) ? data : (data.items || []);
-  } catch (err) {
-    console.error("Erro no fetchScans:", err);
-    return [];
+  // Constrói o URL dinamicamente
+  const response = await fetch(`${BASE_API_URL}/api/scans`, {
+    method: "GET"
+  });
+
+  if (!response.ok) {
+    throw new Error(`Erro ao carregar scans: ${response.status}`);
   }
+
+  const data = await response.json();
+  return Array.isArray(data) ? data : (data.items || []);
 }
 
 export async function startScan(url: string): Promise<ScanResult> {
-  // O return está DENTRO da função, o que resolve o erro de sintaxe
-  return await safeFetch("StartScan", {
+  const response = await fetch(`${BASE_API_URL}/api/StartScan`, {
     method: "POST",
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ url })
   });
+
+  if (!response.ok) {
+    throw new Error(`Erro ao iniciar scan: ${response.status}`);
+  }
+
+  return await response.json();
 }
