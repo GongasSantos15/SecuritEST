@@ -1,5 +1,5 @@
-// Lemos o URL exato e completo que o GitHub Actions injetou
-const BASE_API_URL = import.meta.env.VITE_API_URL.replace(/\/api\/.*$/, "");
+// Define a base URL (tenta ler do env, se falhar usa o padrão)
+const API_BASE = import.meta.env.VITE_API_URL?.replace(/\/api\/.*$/, "") || "https://func-securitest-x7wdl.azurewebsites.net/api";
 
 export interface Vulnerability {
   id: string;
@@ -22,40 +22,36 @@ export interface ScanResult {
   vulnerabilityCount: number;
 }
 
-// Função utilitária de fetch com tratamento de erro
+// Função utilitária para garantir que o fetch é seguro
 async function safeFetch(endpoint: string, options: RequestInit = {}) {
-  const url = `${BASE_API_URL}/${endpoint.replace(/^\//, "")}`;
-  console.log(`A chamar: ${url}`); // Debug no F12
+  const url = `${API_BASE.replace(/\/$/, "")}/${endpoint.replace(/^\//, "")}`;
   
   const response = await fetch(url, options);
   
   if (!response.ok) {
     throw new Error(`Erro ${response.status} ao contactar ${endpoint}`);
   }
-  return response.json();
+  
+  return await response.json();
 }
 
+// ─── Listar todos os scans ─────────────
 export async function fetchScans(): Promise<ScanResult[]> {
   try {
     const data = await safeFetch("scans");
     return Array.isArray(data) ? data : (data.items || []);
   } catch (err) {
     console.error("Erro no fetchScans:", err);
-    return []; // Retorna vazio em vez de crashar a app
+    return [];
   }
 }
 
-// Exemplo de como DEVE estar:
+// ─── Disparar novo scan ────────────
 export async function startScan(url: string): Promise<ScanResult> {
-  const response = await fetch(`${API_BASE}/api/StartScan`, {
+  // Agora o return está dentro da função, o build passará sem erros!
+  return await safeFetch("StartScan", {
     method: "POST",
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ url })
   });
-
-  if (!response.ok) {
-    throw new Error(`Erro ao iniciar scan: ${response.status}`);
-  }
-
-  return await response.json(); 
 }
