@@ -67,7 +67,7 @@ export default function App() {
   const [apiOffline, setApiOffline] = useState(false);
 
  // ─── Iniciar: CosmosDB → fallback localStorage ───────────────────────────
-  useEffect(() => {
+ useEffect(() => {
     const { scans: cached, details: cachedDetails } = loadFromStorage();
     if (cached.length > 0) {
       setScans(cached);
@@ -76,10 +76,18 @@ export default function App() {
 
     fetchScans()
       .then((results) => {
-        // Agora o results já vem como um array puro graças à nova api.ts
-        const fresh = results.map(toScanData);
+        // SEGURANÇA: Garante que estamos a trabalhar com um array
+        const scanArray = Array.isArray(results) ? results : 
+                          (results && typeof results === 'object' && 'data' in results) ? results.data : 
+                          [];
+
+        if (!Array.isArray(scanArray)) {
+          throw new Error("Formato de dados inesperado da API");
+        }
+
+        const fresh = scanArray.map(toScanData);
         const details: Record<string, ScanResult> = {};
-        results.forEach((r) => (details[r.id] = r));
+        scanArray.forEach((r) => (details[r.id] = r));
         
         setScans(fresh);
         setScanDetails(details);
