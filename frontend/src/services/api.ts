@@ -34,7 +34,9 @@ export async function fetchScans(): Promise<ScanResult[]> {
     throw new Error(`Erro ao carregar scans: ${response.status}`);
   }
 
-  return response.json();
+  const data = await response.json();
+
+  return data.items || [];
 }
 
 // ─── Disparar novo scan (POST) ────────────────────────────────────────────────
