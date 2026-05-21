@@ -52,5 +52,5 @@ export async function startScan(url: string): Promise<ScanResult> {
     body: JSON.stringify({ url }),
   });
 }
-  return await response.json();
-}
+
+return await response.json();
