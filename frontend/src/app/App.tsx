@@ -99,9 +99,6 @@ export default function App() {
       const scanData = toScanData(localResult);
       setScans(prev => [scanData, ...prev]);
       setSelectedScan(scanData);
-    } catch (err) {
-      console.error("Erro ao iniciar scan:", err);
-      alert("Falha ao iniciar o scan.");
     }
   };
 
