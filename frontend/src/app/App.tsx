@@ -67,6 +67,7 @@ export default function App() {
   const [apiOffline, setApiOffline] = useState(false);
 
   // ─── Iniciar: CosmosDB → fallback localStorage ───────────────────────────
+ // ─── Iniciar: CosmosDB → fallback localStorage ───────────────────────────
   useEffect(() => {
     const { scans: cached, details: cachedDetails } = loadFromStorage();
     if (cached.length > 0) {
@@ -74,15 +75,20 @@ export default function App() {
       setScanDetails(cachedDetails);
     }
 
-    // DEBUG: Adicione isto
     fetchScans()
       .then((results) => {
-        console.log("Dados recebidos da API:", results); // <--- VERIFIQUE ISTO NO F12
-        const validResults = results.filter(r => r.id && r.timestamp);
-        // ... restante do código
+        // Agora o results já vem como um array puro graças à nova api.ts
+        const fresh = results.map(toScanData);
+        const details: Record<string, ScanResult> = {};
+        results.forEach((r) => (details[r.id] = r));
+        
+        setScans(fresh);
+        setScanDetails(details);
+        saveToStorage(fresh, details);
+        setApiOffline(false);
       })
       .catch((err) => {
-        console.error("ERRO DETALHADO DA API:", err); // <--- VEJA A MENSAGEM DO ERRO
+        console.error("Falha ao comunicar com Cosmos DB:", err);
         setApiOffline(true);
       })
       .finally(() => setLoading(false));
