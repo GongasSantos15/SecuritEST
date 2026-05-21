@@ -50,11 +50,9 @@ function loadFromStorage(): { scans: ScanData[]; details: Record<string, ScanRes
 function toScanData(s: any): ScanData {
   return {
     id: s.id,
-    // Verifica primeiro o campo real da BD (target_url), depois tenta 'url'
-    url: s.target_url || s.url || "URL não especificada",
-    // Converte a string de data que vem da BD para objeto Date
+    // Aqui usamos explicitamente os nomes que estão na sua BD
+    url: s.target_url || "URL não especificada", 
     timestamp: s.started_at ? new Date(s.started_at) : new Date(),
-    // Mapeia o score e vulnerabilidades corretamente
     riskScore: s.final_score ?? 0,
     vulnerabilities: s.findings_count ?? 0,
     status: s.status || "completed"
@@ -73,17 +71,20 @@ export default function App() {
   setLoading(true);
   fetchScans()
     .then((results) => {
-      console.log("Dados brutos recebidos:", results); // Vê na consola o que chega!
+      console.log("DEBUG: Dados recebidos da API:", results);
 
-      // Se 'results' for um array, mapeia todos. Se for um objeto, mete num array.
+      // FORÇAR ARRAY: Se results for o objeto único, envolvemo-lo num array []
       const dataArray = Array.isArray(results) ? results : [results];
       
+      // Mapear
       const fresh = dataArray.map(toScanData);
       setScans(fresh);
       
-      // Guarda os detalhes completos para quando clicares no scan
+      // Criar o mapa de detalhes com o objeto completo para a página de detalhes
       const detailsMap: Record<string, any> = {};
-      dataArray.forEach(item => { detailsMap[item.id] = item; });
+      dataArray.forEach(item => { 
+        detailsMap[item.id] = item; 
+      });
       setScanDetails(detailsMap);
     })
     .catch(err => console.error("Erro na API:", err))
