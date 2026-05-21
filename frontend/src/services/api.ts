@@ -37,21 +37,21 @@ export async function fetchScans(): Promise<ScanResult[]> {
 }
 
 export async function startScan(url: string): Promise<ScanResult> {
-  const endpoint = `${API_BASE.replace(/\/$/, "")}/StartScan`; // Base URL + /StartScan
-  
-  console.log("A tentar iniciar scan em:", endpoint);
+  // Vamos enviar exatamente o que a função espera (provavelmente um objeto com a URL)
+  const payload = { target_url: url }; 
 
-  const response = await fetch(endpoint, {
-    method: "POST", // Certifica-te que a tua Function no Azure aceita POST
+  const response = await fetch(`${API_BASE}/StartScan`, {
+    method: "POST",
     headers: { 
       'Content-Type': 'application/json' 
     },
-    body: JSON.stringify({ target_url: url }) // Ajustei para target_url baseado no teu JSON
+    body: JSON.stringify(payload)
   });
 
   if (!response.ok) {
-    // Se der 404, o nome da função está errado ou não aceita POST
-    throw new Error(`Falha ao iniciar scan. Código: ${response.status}`);
+    // Aqui capturamos o erro 500 que o Azure está a devolver
+    const errorText = await response.text();
+    throw new Error(`Erro ${response.status}: ${errorText}`);
   }
 
   return await response.json();
