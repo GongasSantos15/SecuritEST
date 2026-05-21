@@ -3,12 +3,14 @@ const API_BASE = (import.meta.env.VITE_API_URL || "https://func-securitest-x7wdl
 
 export interface ScanResult {
   id: string;
-  target_url: string;
-  started_at: string;
-  final_score: number;
-  findings_count: number;
+  target_url?: string;     // Tornamos opcional com ?
+  url?: string;            // Fallback
+  started_at?: string;     // Campo da BD
+  timestamp?: string;      // Fallback
+  final_score?: number;    // Campo da BD
+  findings_count?: number; // Campo da BD
   status: "completed" | "in-progress" | "failed";
-  findings: any[];
+  findings?: any[];
 }
 
 async function safeFetch(endpoint: string, options: RequestInit = {}) {
