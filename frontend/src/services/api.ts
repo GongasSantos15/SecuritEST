@@ -28,10 +28,11 @@ async function safeFetch(endpoint: string, options: RequestInit = {}) {
 export async function fetchScans(): Promise<ScanResult[]> {
   try {
     const data = await safeFetch("scans");
+    console.log("Resposta real da API:", data); // Olhe para a consola (F12)
     
-    // Se a API retornar um objeto único, transforma-o num array.
-    // Se for um array, devolve como está.
-    return Array.isArray(data) ? data : [data];
+    // Se a API retornar um array, devolve-o diretamente.
+    // Se a API retornar um objeto encapsulado (ex: { scans: [...] }), aceda à chave correta.
+    return Array.isArray(data) ? data : (data.scans || [data]);
   } catch (err) {
     console.error("Erro no fetchScans:", err);
     return [];
