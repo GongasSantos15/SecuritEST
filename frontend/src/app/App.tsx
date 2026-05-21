@@ -22,10 +22,11 @@ import {
 const STORAGE_KEY = "securitest_scans";
 const DETAILS_KEY = "securitest_scan_details";
 
-// ─── Helpers ─────────────────────────────────────────────────────────────
+// ─── Helpers localStorage ────────────────────────────────────────────────────
 function saveToStorage(scans: ScanData[], details: Record<string, ScanResult>) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(scans.map(s => ({ ...s, timestamp: s.timestamp.toISOString() }))));
+    const serialized = scans.map((s) => ({ ...s, timestamp: s.timestamp.toISOString() }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(serialized));
     localStorage.setItem(DETAILS_KEY, JSON.stringify(details));
   } catch (_) {}
 }
@@ -35,23 +36,27 @@ function loadFromStorage(): { scans: ScanData[]; details: Record<string, ScanRes
     const raw = localStorage.getItem(STORAGE_KEY);
     const rawDetails = localStorage.getItem(DETAILS_KEY);
     if (!raw) return { scans: [], details: {} };
-    const parsed = JSON.parse(raw);
-    return { 
-      scans: parsed.map((s: any) => ({ ...s, timestamp: new Date(s.timestamp) })), 
-      details: rawDetails ? JSON.parse(rawDetails) : {} 
-    };
-  } catch (_) { return { scans: [], details: {} }; }
+    const parsed = JSON.parse(raw) as any[];
+    const scans: ScanData[] = parsed.map((s) => ({ 
+      ...s, 
+      timestamp: !isNaN(Date.parse(s.timestamp)) ? new Date(s.timestamp) : new Date() 
+    }));
+    const details: Record<string, ScanResult> = rawDetails ? JSON.parse(rawDetails) : {};
+    return { scans, details };
+  } catch (_) {
+    return { scans: [], details: {} };
+  }
 }
 
 // Adaptador: Transforma o objeto do CosmosDB (ScanResult) para o formato do App (ScanData)
 function toScanData(s: ScanResult): ScanData {
-  return { 
-    id: s.id, 
-    url: s.target_url, 
-    timestamp: new Date(s.started_at), 
-    riskScore: s.final_score, 
-    vulnerabilities: s.findings_count, 
-    status: s.status 
+  return {
+    id: s.id,
+    url: s.target_url,
+    timestamp: new Date(s.started_at),
+    riskScore: s.final_score,
+    vulnerabilities: s.findings_count,
+    status: s.status
   };
 }
 
@@ -70,11 +75,13 @@ export default function App() {
     }
 
     fetchScans()
-      .then(res => {
-        const fresh = res.map(toScanData);
+      .then((results) => {
+        const fresh = results.map(toScanData);
         const details: Record<string, ScanResult> = {};
-        res.forEach(r => details[r.id] = r);
-        setScans(fresh); setScanDetails(details); saveToStorage(fresh, details);
+        results.forEach((r) => (details[r.id] = r));
+        setScans(fresh);
+        setScanDetails(details);
+        saveToStorage(fresh, details);
         setApiOffline(false);
       })
       .catch((err) => {
@@ -88,16 +95,8 @@ export default function App() {
     try {
       const result = await startScan(url);
       const scanData = toScanData(result);
-      setScans(prev => [scanData, ...prev]);
-      setScanDetails(prev => ({ ...prev, [result.id]: result }));
-      setSelectedScan(scanData);
-      setApiOffline(false);
-    } catch { 
-      // API inacessível, mas permitimos guardar localmente
-      const localId = `local_${Date.now()}`;
-      const localResult: ScanResult = { id: localId, scan_id: localId, target_url: url, timestamp: new Date().toISOString(), status: "completed", final_score: 0, findings: [], findings_count: 0 };
-      const scanData = toScanData(localResult);
-      setScans(prev => [scanData, ...prev]);
+      setScans((prev) => [scanData, ...prev]);
+      setScanDetails((prev) => ({ ...prev, [result.id]: result }));
       setSelectedScan(scanData);
     }
   };
@@ -158,6 +157,9 @@ export default function App() {
               </div>
             )}
           </div>
+          
+          {/* Adicionado aqui para aparecer no detalhe */}
+          <AboutSection />
         </main>
       </div>
     );
