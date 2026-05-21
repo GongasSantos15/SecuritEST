@@ -1,4 +1,4 @@
-// Define a base URL com fallback seguro
+// Define a base URL (tenta ler do env, se falhar usa o padrão do Azure)
 const API_BASE = import.meta.env.VITE_API_URL?.replace(/\/api\/.*$/, "") || "https://func-securitest-x7wdl.azurewebsites.net/api";
 
 export interface Vulnerability {
@@ -22,7 +22,7 @@ export interface ScanResult {
   vulnerabilityCount: number;
 }
 
-// Função utilitária interna
+// Função utilitária central para chamadas à API
 async function safeFetch(endpoint: string, options: RequestInit = {}) {
   const url = `${API_BASE.replace(/\/$/, "")}/${endpoint.replace(/^\//, "")}`;
   const response = await fetch(url, options);
@@ -42,7 +42,7 @@ export async function fetchScans(): Promise<ScanResult[]> {
 }
 
 export async function startScan(url: string): Promise<ScanResult> {
-  // O return ESTÁ DENTRO das chavetas da função, resolvendo o erro de build
+  // O return está DENTRO da função, o que resolve o erro de sintaxe
   return await safeFetch("StartScan", {
     method: "POST",
     headers: { 'Content-Type': 'application/json' },
