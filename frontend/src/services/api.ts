@@ -45,12 +45,17 @@ export async function fetchScans(): Promise<ScanResult[]> {
   }
 }
 
+// Exemplo de como DEVE estar:
 export async function startScan(url: string): Promise<ScanResult> {
-  return await safeFetch("StartScan", {
+  const response = await fetch(`${API_BASE}/api/StartScan`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ url }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url })
   });
-}
 
-return await response.json();
+  if (!response.ok) {
+    throw new Error(`Erro ao iniciar scan: ${response.status}`);
+  }
+
+  return await response.json(); 
+}
