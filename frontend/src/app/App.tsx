@@ -47,8 +47,11 @@ function AboutSection() {
   return (
     <div className="mt-8 bg-card border border-border rounded-lg p-6">
       <h3 className="mb-4">About SecuritEST</h3>
+      <p className="text-sm text-muted-foreground mb-4">
+        SecuritEST is a cloud-native API security scanning platform built on Microsoft Azure.
+      </p>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-        {[{t: "Container-Based", d: "Scalable engine"}, {t: "Serverless", d: "Azure Functions"}, {t: "NoSQL", d: "Cosmos DB"}].map(i => (
+        {[{t: "Container-Based", d: "Scalable engine"}, {t: "Serverless", d: "Azure Functions processing"}, {t: "NoSQL", d: "Cosmos DB scale"}].map(i => (
           <div key={i.t} className="bg-accent rounded-lg p-4"><h4>{i.t}</h4><p className="text-muted-foreground">{i.d}</p></div>
         ))}
       </div>
@@ -72,6 +75,7 @@ export default function App() {
         const details: Record<string, ScanResult> = {};
         res.forEach(r => details[r.id] = r);
         setScans(fresh); setScanDetails(details); saveToStorage(fresh, details);
+        setApiOffline(false);
       })
       .catch(() => setApiOffline(true))
       .finally(() => setLoading(false));
@@ -84,25 +88,35 @@ export default function App() {
       setScans(prev => [scanData, ...prev]);
       setScanDetails(prev => ({ ...prev, [result.id]: result }));
       setSelectedScan(scanData);
-    } catch { alert("Falha ao iniciar scan."); }
+      setApiOffline(false);
+    } catch { 
+      // API inacessível, mas permitimos guardar localmente
+      const localId = `local_${Date.now()}`;
+      const localResult: ScanResult = { id: localId, scan_id: localId, target_url: url, timestamp: new Date().toISOString(), status: "completed", final_score: 0, findings: [], findings_count: 0 };
+      const scanData = toScanData(localResult);
+      setScans(prev => [scanData, ...prev]);
+      setSelectedScan(scanData);
+      setApiOffline(true);
+    }
   };
 
   if (selectedScan) {
-    const findings = scanDetails[selectedScan.id]?.findings ?? [];
+    const detail = scanDetails[selectedScan.id];
+    const findings = detail?.findings ?? [];
     return (
       <div className="min-h-screen bg-background">
         <Header />
         <main className="container mx-auto px-6 py-8">
-          <button onClick={() => setSelectedScan(null)} className="flex items-center gap-2 mb-6"><ArrowLeft className="w-4 h-4" /> Back</button>
+          <button onClick={() => setSelectedScan(null)} className="flex items-center gap-2 mb-6 transition-colors text-muted-foreground hover:text-foreground"><ArrowLeft className="w-4 h-4" /> Back to Dashboard</button>
           <div className="grid lg:grid-cols-3 gap-6 mb-8">
-            <div className="lg:col-span-2 bg-card border rounded-lg p-6"><h2>Scan Report</h2><p>{selectedScan.url}</p></div>
-            <div className="bg-card border rounded-lg p-6 flex justify-center"><RiskScoreGauge score={Number(selectedScan.riskScore)} /></div>
+            <div className="lg:col-span-2 bg-card border rounded-lg p-6"><h2>Scan Report</h2><p className="text-sm text-muted-foreground break-all">{selectedScan.url}</p><p className="text-xs text-muted-foreground mt-2">{selectedScan.timestamp.toLocaleString()}</p></div>
+            <div className="bg-card border rounded-lg p-6 flex justify-center items-center"><RiskScoreGauge score={Number(selectedScan.riskScore)} /></div>
           </div>
           <h3 className="mb-4">Vulnerabilities Detected ({findings.length})</h3>
           <div className="space-y-4">
             {Array.isArray(findings) ? findings.map(f => (
               <VulnerabilityCard key={f.id + f.endpoint} vulnerability={{id: f.id, title: f.name, severity: f.severity > 5 ? "critical" : "medium", category: f.category, description: f.description || "", endpoint: f.endpoint, recommendation: f.recommendation}} />
-            )) : <p>No findings.</p>}
+            )) : <p className="text-muted-foreground italic">No findings or data structure error.</p>}
           </div>
           <AboutSection />
         </main>
@@ -114,22 +128,9 @@ export default function App() {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-6 py-8">
-        {apiOffline && <div className="mb-6 bg-yellow-50 p-3 text-yellow-800 rounded">Backend inacessível.</div>}
+        {apiOffline && <div className="mb-6 bg-yellow-50 p-3 text-yellow-800 rounded border border-yellow-200 flex items-center gap-3"><WifiOff className="w-4 h-4" /> Backend inacessível. A funcionar em modo offline.</div>}
         <ScanForm onSubmit={handleNewScan} />
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 my-8">
           <StatsCard title="Total Scans" value={scans.length} icon={Activity} />
-          <StatsCard title="Vulnerabilities" value={scans.reduce((a, s) => a + s.vulnerabilities, 0)} icon={AlertTriangle} />
-          <StatsCard title="Avg Risk" value={Math.round(scans.reduce((a, s) => a + Number(s.riskScore), 0) / (scans.length || 1))} icon={TrendingUp} />
-          <StatsCard title="Status" value="Online" icon={CheckCircle} />
-        </div>
-        <h3 className="mb-4">Recent Scans</h3>
-        {loading ? <Loader2 className="animate-spin mx-auto w-8 h-8" /> : (
-          <div className="grid md:grid-cols-2 gap-4">
-            {scans.map(s => <ScanHistoryCard key={s.id} scan={s} onClick={() => setSelectedScan(s)} />)}
-          </div>
-        )}
-        <AboutSection />
-      </main>
-    </div>
-  );
-}
+          <StatsCard title="Vulnerabilities Found" value={scans.reduce((a, s) => a + s.vulnerabilities, 0)} icon={AlertTriangle} />
+          <Stats
