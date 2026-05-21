@@ -48,16 +48,19 @@ function loadFromStorage(): { scans: ScanData[]; details: Record<string, ScanRes
   }
 }
 
-function toScanData(s: ScanResult): ScanData {
+function toScanData(s: any): ScanData {
   return {
     id: s.id,
-    // Verifica se s.target_url existe no objeto que chega do Cosmos DB
-    url: s.target_url || "URL não especificada", 
+    // Mapeamos 'target_url' para 'url'
+    url: s.target_url || "URL não especificada",
+    // Mapeamos 'started_at' para o formato Date
     timestamp: s.started_at ? new Date(s.started_at) : new Date(),
-    // Garante que estas propriedades existem na interface ScanResult
-    riskScore: s.final_score ?? 0, 
-    vulnerabilities: s.findings_count ?? 0, 
-    status: s.status
+    // Mapeamos 'final_score' (número) para 'riskScore'
+    riskScore: typeof s.final_score === 'number' ? s.final_score : 0,
+    // Mapeamos 'findings_count' (número) para 'vulnerabilities'
+    vulnerabilities: typeof s.findings_count === 'number' ? s.findings_count : 0,
+    // Status vem diretamente da API
+    status: s.status || "completed"
   };
 }
 
