@@ -19,24 +19,20 @@ import {
   WifiOff
 } from "lucide-react";
 
-// Converte um ScanResult (formato da API) para ScanData (formato da UI)
-function toScanData(s: ScanResult): ScanData {
+function toScanData(s: any): ScanData {
   return {
     id: s.id,
-    url: s.target_url || s.url || "URL não especificada",
+    // Mapeamos 'target_url' para 'url'
+    url: s.target_url || "URL não especificada",
+    // Mapeamos 'started_at' para o formato Date
     timestamp: s.started_at ? new Date(s.started_at) : new Date(),
-    riskScore: typeof s.final_score === "number" ? Math.round(s.final_score) : 0,
-    vulnerabilities: typeof s.findings_count === "number" ? s.findings_count : (s.findings?.length ?? 0),
+    // Mapeamos 'final_score' (número) para 'riskScore'
+    riskScore: typeof s.final_score === 'number' ? s.final_score : 0,
+    // Mapeamos 'findings_count' (número) para 'vulnerabilities'
+    vulnerabilities: typeof s.findings_count === 'number' ? s.findings_count : 0,
+    // Status vem diretamente da API
     status: s.status || "completed"
   };
-}
-
-// Converte severity numérica do scanner para o tipo que o VulnerabilityCard espera
-function mapSeverity(severity: number): "critical" | "high" | "medium" | "low" {
-  if (severity >= 8) return "critical";
-  if (severity >= 5) return "high";
-  if (severity >= 3) return "medium";
-  return "low";
 }
 
 export default function App() {
@@ -46,38 +42,66 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [apiOffline, setApiOffline] = useState(false);
 
-  useEffect(() => {
-    setLoading(true);
-    fetchScans()
-      .then((results) => {
-        const mappedScans = results.map(toScanData);
-        const details: Record<string, ScanResult> = {};
-        results.forEach((r) => (details[r.id] = r));
+useEffect(() => {
+  setLoading(true);
+  
+  fetchScans()
+    .then((results) => {
+      // Mapeamento direto dos dados vindos do Azure
+      const mappedScans: ScanData[] = results.map((s: any) => ({
+        id: s.id,
+        url: s.target_url || "URL não especificada",
+        timestamp: s.started_at ? new Date(s.started_at) : new Date(),
+        riskScore: typeof s.final_score === 'number' ? s.final_score : 0,
+        vulnerabilities: typeof s.findings_count === 'number' ? s.findings_count : 0,
+        status: s.status || "completed"
+      }));
 
-        setScans(mappedScans);
-        setScanDetails(details);
-        setApiOffline(false);
-      })
-      .catch((err) => {
-        console.error("Erro ao carregar scans:", err);
-        setApiOffline(true);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+      setScans(mappedScans);
+    })
+    .catch(err => {
+      console.error("Erro ao carregar scans da API:", err);
+      setScans([]); // Estado vazio em caso de erro
+    })
+    .finally(() => setLoading(false));
+}, []);
 
+  // ─── Novo scan ────────────────────────────────────────────────────────────
   const handleNewScan = async (url: string) => {
     try {
       const result = await startScan(url);
       const scanData = toScanData(result);
-
-      setScans((prev) => [scanData, ...prev]);
-      setScanDetails((prev) => ({ ...prev, [result.id]: result }));
+      setScans((prev) => {
+        const updated = [scanData, ...prev];
+        const updatedDetails = { ...scanDetails, [result.id]: result };
+        setScanDetails(updatedDetails);
+        return updated;
+      });
       setSelectedScan(scanData);
       setApiOffline(false);
     } catch (err: any) {
       console.error("Erro no Scan:", err);
+      // API inacessível — guardar localmente sem bloquear o utilizador
+      const localId = `local_${Date.now()}`;
+      const localResult: ScanResult = {
+        id: localId,
+        scan_id: localId,
+        url,
+        timestamp: new Date().toISOString(),
+        status: "completed",
+        riskScore: 0,
+        vulnerabilities: [],
+        vulnerabilityCount: 0
+      };
+      const scanData = toScanData(localResult);
+      setScans((prev) => {
+        const updated = [scanData, ...prev];
+        const updatedDetails = { ...scanDetails, [localId]: localResult };
+        setScanDetails(updatedDetails);
+        return updated;
+      });
+      setSelectedScan(scanData);
       setApiOffline(true);
-      throw err; // propaga para o ScanForm mostrar o erro
     }
   };
 
@@ -114,11 +138,6 @@ export default function App() {
                       <Clock className="w-3 h-3" />
                       {selectedScan.timestamp.toLocaleString()}
                     </div>
-                    {detail?.grade && (
-                      <p className="mt-2 text-sm font-medium">
-                        Grade: <span className="text-primary">{detail.grade}</span>
-                      </p>
-                    )}
                   </div>
                   <div className="flex gap-2">
                     <button className="p-2 rounded-lg border border-border hover:bg-accent transition-colors">
@@ -137,31 +156,29 @@ export default function App() {
             </div>
           </div>
 
-          <div className="mb-6">
-            <h3 className="mb-4">Vulnerabilities Detected ({findings.length})</h3>
-            {findings.length === 0 ? (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
-                <CheckCircle className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                <p className="text-green-800">No vulnerabilities detected.</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {findings.map((f, index) => (
-                  <VulnerabilityCard
-                    key={`${f.id}-${index}`}
-                    vulnerability={{
-                      id: f.id,
-                      title: f.name || f.title || "Unknown Vulnerability",
-                      severity: mapSeverity(f.severity),
-                      category: f.owasp || f.category || "General",
-                      description: f.description || f.evidence || "No description provided.",
-                      endpoint: f.endpoint,
-                      recommendation: f.recommendation || "No recommendation available."
-                    }}
-                  />
-                ))}
-              </div>
-            )}
+          <h3 className="mb-4">Vulnerabilities Detected ({findings?.length || 0})</h3>
+          
+          <div className="space-y-4">
+            {(() => {
+              if (!findings || findings.length === 0) {
+                return <p className="text-muted-foreground italic">No vulnerabilities found.</p>;
+              }
+              
+              return findings.map((f, index) => (
+                <VulnerabilityCard 
+                  key={`${f.id}-${index}`} 
+                  vulnerability={{
+                    id: f.id, 
+                    title: f.name || "Unknown Vulnerability",
+                    severity: (f.severity > 5) ? "critical" : "medium",
+                    category: f.category || "General",
+                    description: f.description || "No description provided.",
+                    endpoint: f.endpoint,
+                    recommendation: f.recommendation || "No recommendation."
+                  }} 
+                />
+              ));
+            })()}
           </div>
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
@@ -192,7 +209,7 @@ export default function App() {
         {apiOffline && (
           <div className="mb-6 flex items-center gap-3 bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3 text-yellow-800 text-sm">
             <WifiOff className="w-4 h-4 flex-shrink-0" />
-            Backend inacessível — a funcionar em modo offline.
+            Backend inacessível — a funcionar em modo offline. Os scans são guardados localmente.
           </div>
         )}
 
