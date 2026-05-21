@@ -22,14 +22,6 @@ export interface ScanResult {
   vulnerabilityCount: number;
 }
 
-// Função utilitária central para chamadas à API
-async function safeFetch(endpoint: string, options: RequestInit = {}) {
-  const url = `${API_BASE.replace(/\/$/, "")}/${endpoint.replace(/^\//, "")}`;
-  const response = await fetch(url, options);
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  return response.json();
-}
-
 // ─── Funções Exportadas ─────────────
 export async function fetchScans(): Promise<ScanResult[]> {
   // Constrói o URL dinamicamente
