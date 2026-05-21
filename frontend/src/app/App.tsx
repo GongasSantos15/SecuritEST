@@ -98,6 +98,8 @@ export default function App() {
       setScans((prev) => [scanData, ...prev]);
       setScanDetails((prev) => ({ ...prev, [result.id]: result }));
       setSelectedScan(scanData);
+    } catch (err) {
+      console.error("Erro ao iniciar scan:", err);
     }
   };
 
@@ -106,7 +108,7 @@ export default function App() {
     ? Math.round(scans.reduce((sum, s) => sum + (Number(s.riskScore) || 0), 0) / scans.length)
     : 0;
 
-// ─── Vista detalhe ────────────────────────────────────────────────────────
+  // ─── Vista detalhe ────────────────────────────────────────────────────────
   if (selectedScan) {
     const detail = scanDetails[selectedScan.id];
     const findings = detail?.findings ?? [];
@@ -157,8 +159,6 @@ export default function App() {
               </div>
             )}
           </div>
-          
-          {/* Adicionado aqui para aparecer no detalhe */}
           <AboutSection />
         </main>
       </div>
@@ -170,20 +170,28 @@ export default function App() {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-6 py-8">
-        {/* ... (todo o conteúdo anterior do dashboard) ... */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <StatsCard title="Total Scans" value={scans.length.toString()} icon={Activity} />
+            <StatsCard title="Vulnerabilities" value={totalVulnerabilities.toString()} icon={AlertTriangle} />
+            <StatsCard title="Avg Risk Score" value={`${avgRiskScore}%`} icon={TrendingUp} />
+        </div>
         
-        <div>
-           {/* ... (lista de scans) ... */}
+        <ScanForm onScan={handleNewScan} />
+
+        <div className="mt-8">
+            <h3 className="mb-4">Recent Scans</h3>
+            {scans.map(scan => (
+                <ScanHistoryCard key={scan.id} scan={scan} onClick={() => setSelectedScan(scan)} />
+            ))}
         </div>
 
-        {/* Adicionado aqui para aparecer no dashboard */}
         <AboutSection />
       </main>
     </div>
   );
 }
 
-// COMPONENTE AUXILIAR para não repetir código
+// COMPONENTE AUXILIAR
 function AboutSection() {
   return (
     <div className="mt-8 bg-card border border-border rounded-lg p-6">
