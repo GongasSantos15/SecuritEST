@@ -66,7 +66,6 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [apiOffline, setApiOffline] = useState(false);
 
-  // ─── Iniciar: CosmosDB → fallback localStorage ───────────────────────────
  // ─── Iniciar: CosmosDB → fallback localStorage ───────────────────────────
   useEffect(() => {
     const { scans: cached, details: cachedDetails } = loadFromStorage();
@@ -186,19 +185,25 @@ export default function App() {
             </div>
           </div>
 
-          <div className="mb-6">
-            <h3 className="mb-4">Vulnerabilities Detected ({vulnerabilities.length})</h3>
-            {vulnerabilities.length === 0 ? (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
-                <CheckCircle className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                <p className="text-green-800">No vulnerabilities detected.</p>
-              </div>
+          <h3 className="mb-4">Vulnerabilities Detected ({findings.length})</h3>
+          <div className="space-y-4">
+            {Array.isArray(findings) ? (
+              findings.map((f) => (
+                <VulnerabilityCard 
+                  key={f.id + f.endpoint} 
+                  vulnerability={{
+                    id: f.id, 
+                    title: f.name, 
+                    severity: f.severity > 5 ? "critical" : "medium", 
+                    category: f.category, 
+                    description: f.description || "", 
+                    endpoint: f.endpoint, 
+                    recommendation: f.recommendation
+                  }} 
+                />
+              ))
             ) : (
-              <div className="space-y-4">
-                {vulnerabilities.map((vuln) => (
-                  <VulnerabilityCard key={vuln.id} vulnerability={vuln} />
-                ))}
-              </div>
+              <p className="text-muted-foreground italic">No vulnerabilities found.</p>
             )}
           </div>
 
