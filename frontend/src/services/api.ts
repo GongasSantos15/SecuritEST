@@ -37,10 +37,10 @@ export async function fetchScans(): Promise<ScanResult[]> {
 }
 
 export async function startScan(url: string): Promise<ScanResult> {
-  const response = await fetch(`${BASE_API_URL}/api/StartScan`, {
+  const response = await fetch(`${BASE_URL}/StartScan`, {
     method: "POST",
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url })
+    body: JSON.stringify({ target_url: url })
   });
 
   if (!response.ok) {
