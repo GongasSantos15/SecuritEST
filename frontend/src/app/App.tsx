@@ -46,13 +46,16 @@ function loadFromStorage(): { scans: ScanData[]; details: Record<string, ScanRes
 }
 
 function toScanData(s: ScanResult): ScanData {
+  // Fazemos um log para debug caso estejas a ver a consola F12
+  console.log("A mapear item:", s);
+  
   return {
-    id: s.id,
-    url: s.target_url,
-    timestamp: new Date(s.started_at),
-    riskScore: s.final_score,
-    vulnerabilities: s.findings_count,
-    status: s.status
+    id: s.id || "unknown-id",
+    url: s.target_url || "URL desconhecida",
+    timestamp: s.started_at ? new Date(s.started_at) : new Date(),
+    riskScore: Number(s.final_score) || 0,
+    vulnerabilities: Number(s.findings_count) || 0,
+    status: s.status || "completed"
   };
 }
 
