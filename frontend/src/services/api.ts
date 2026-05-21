@@ -27,12 +27,17 @@ async function safeFetch(endpoint: string, options: RequestInit = {}) {
 
 export async function fetchScans(): Promise<ScanResult[]> {
   try {
-    return await safeFetch("scans");
+    const data = await safeFetch("scans");
+    
+    // Se a API retornar um objeto único, transforma-o num array.
+    // Se for um array, devolve como está.
+    return Array.isArray(data) ? data : [data];
   } catch (err) {
     console.error("Erro no fetchScans:", err);
     return [];
   }
 }
+
 export async function startScan(url: string): Promise<ScanResult> {
   // O scanner exige 'base_url' e 'target_url'. 
   // Se a 'base_url' for a própria URL que estás a scanear, envia-a nos dois campos.
