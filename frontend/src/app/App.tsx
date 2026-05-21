@@ -52,10 +52,10 @@ function toScanData(s: ScanResult): ScanData {
   return {
     id: s.id,
     url: s.target_url || "URL não especificada",
-    // Garante que o timestamp é tratado como data corretamente
     timestamp: s.started_at ? new Date(s.started_at) : new Date(),
     riskScore: s.final_score || 0,
-    vulnerabilities: s.findings_count || 0,
+    // Alterado para ler corretamente da estrutura da BD: findings_count
+    vulnerabilities: s.findings_count || 0, 
     status: s.status
   };
 }
@@ -72,16 +72,13 @@ export default function App() {
   setLoading(true);
   fetchScans()
     .then((results) => {
-      // 1. Garante que é array
-      const dataArray = Array.isArray(results) ? results : [results];
+      // Garante que é um array, independentemente do formato da resposta
+      const dataArray = Array.isArray(results) ? results : (results.scans || []);
       
-      // 2. Mapeia para o formato que o componente ScanHistoryCard espera
       const fresh = dataArray.map(toScanData);
       setScans(fresh);
       
-      // 3. CRUCIAL: Guarda o objeto original para a página de detalhes
-      // Aqui usamos o objeto 'item' original que vem da API
-      const detailsMap: Record<string, any> = {};
+      const detailsMap: Record<string, ScanResult> = {};
       dataArray.forEach(item => { 
         detailsMap[item.id] = item; 
       });
