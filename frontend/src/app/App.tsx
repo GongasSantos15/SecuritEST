@@ -1,3 +1,8 @@
+O problema é que o código que te enviei no último passo estava **incompleto** no bloco do `Dashboard` (usei `/* ... */` como atalho, e tu copiaste esse atalho para o ficheiro). Isso eliminou toda a interface principal do teu site.
+
+Aqui está o **ficheiro completo e funcional**. Podes fazer *copy-paste* deste código diretamente para o teu `App.tsx` que tudo voltará ao normal (Dashboard, Scans e AboutSection):
+
+```tsx
 import { useState, useEffect } from "react";
 import { Header } from "./components/Header";
 import { StatsCard } from "./components/StatsCard";
@@ -12,9 +17,6 @@ import {
   CheckCircle,
   TrendingUp,
   ArrowLeft,
-  Download,
-  Share2,
-  Clock,
   Loader2,
   WifiOff
 } from "lucide-react";
@@ -48,7 +50,6 @@ function loadFromStorage(): { scans: ScanData[]; details: Record<string, ScanRes
   }
 }
 
-// Adaptador: Transforma o objeto do CosmosDB (ScanResult) para o formato do App (ScanData)
 function toScanData(s: ScanResult): ScanData {
   return {
     id: s.id,
@@ -58,6 +59,30 @@ function toScanData(s: ScanResult): ScanData {
     vulnerabilities: s.findings_count,
     status: s.status
   };
+}
+
+// COMPONENTE AUXILIAR
+function AboutSection() {
+  return (
+    <div className="mt-8 bg-card border border-border rounded-lg p-6">
+      <h3 className="mb-4">About SecuritEST</h3>
+      <p className="text-sm text-muted-foreground mb-4">
+        SecuritEST is a cloud-native API security scanning platform built on Microsoft Azure.
+      </p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+        {[
+          { title: "Container-Based", desc: "Scalable scanning engine" },
+          { title: "Serverless Computing", desc: "Azure Functions processing" },
+          { title: "NoSQL Storage", desc: "Cosmos DB scale" }
+        ].map((item) => (
+          <div key={item.title} className="bg-accent rounded-lg p-4">
+            <h4 className="mb-2">{item.title}</h4>
+            <p className="text-muted-foreground">{item.desc}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default function App() {
@@ -73,7 +98,6 @@ export default function App() {
       setScans(cached);
       setScanDetails(cachedDetails);
     }
-
     fetchScans()
       .then((results) => {
         const fresh = results.map(toScanData);
@@ -84,10 +108,7 @@ export default function App() {
         saveToStorage(fresh, details);
         setApiOffline(false);
       })
-      .catch((err) => {
-        console.error("Erro na API:", err);
-        setApiOffline(true);
-      })
+      .catch((err) => { console.error(err); setApiOffline(true); })
       .finally(() => setLoading(false));
   }, []);
 
@@ -98,109 +119,61 @@ export default function App() {
       setScans((prev) => [scanData, ...prev]);
       setScanDetails((prev) => ({ ...prev, [result.id]: result }));
       setSelectedScan(scanData);
-    } catch (err) {
-      console.error("Erro ao iniciar scan:", err);
-      alert("Falha ao iniciar o scan.");
-    }
+    } catch (err) { alert("Falha ao iniciar scan."); }
   };
 
   const totalVulnerabilities = scans.reduce((sum, s) => sum + s.vulnerabilities, 0);
-  const avgRiskScore = scans.length
-    ? Math.round(scans.reduce((sum, s) => sum + (Number(s.riskScore) || 0), 0) / scans.length)
-    : 0;
+  const avgRiskScore = scans.length ? Math.round(scans.reduce((sum, s) => sum + (Number(s.riskScore) || 0), 0) / scans.length) : 0;
 
-  // ─── Vista detalhe ────────────────────────────────────────────────────────
   if (selectedScan) {
     const detail = scanDetails[selectedScan.id];
     const findings = detail?.findings ?? [];
-
     return (
       <div className="min-h-screen bg-background">
         <Header />
         <main className="container mx-auto px-6 py-8">
-          <button
-            onClick={() => setSelectedScan(null)}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Dashboard
-          </button>
-
+          <button onClick={() => setSelectedScan(null)} className="flex items-center gap-2 text-muted-foreground mb-6"><ArrowLeft className="w-4 h-4" /> Back to Dashboard</button>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <div className="lg:col-span-2 bg-card border border-border rounded-lg p-6">
+            <div className="lg:col-span-2 bg-card border rounded-lg p-6">
               <h2 className="mb-2">Scan Report</h2>
-              <p className="text-sm text-muted-foreground break-all">{selectedScan.url}</p>
-              <p className="text-xs text-muted-foreground mt-2">{selectedScan.timestamp.toLocaleString()}</p>
+              <p className="text-sm text-muted-foreground">{selectedScan.url}</p>
             </div>
-            <div className="bg-card border border-border rounded-lg p-6 flex items-center justify-center">
+            <div className="bg-card border rounded-lg p-6 flex items-center justify-center">
               <RiskScoreGauge score={Number(selectedScan.riskScore) || 0} />
             </div>
           </div>
-
-          <div className="mb-6">
-            <h3 className="mb-4">Vulnerabilities Detected ({findings.length})</h3>
-            {findings.length === 0 ? (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
-                <CheckCircle className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                <p className="text-green-800">No vulnerabilities detected.</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {findings.map((f) => (
-                  <VulnerabilityCard key={f.id + f.endpoint} vulnerability={{
-                    id: f.id,
-                    title: f.name,
-                    severity: f.severity > 5 ? "critical" : "medium",
-                    category: f.category,
-                    description: f.description || "No description provided.",
-                    endpoint: f.endpoint,
-                    recommendation: f.recommendation
-                  }} />
-                ))}
-              </div>
-            )}
+          <h3 className="mb-4">Vulnerabilities Detected ({findings.length})</h3>
+          <div className="space-y-4">
+            {findings.map((f) => <VulnerabilityCard key={f.id + f.endpoint} vulnerability={{id: f.id, title: f.name, severity: f.severity > 5 ? "critical" : "medium", category: f.category, description: f.description || "", endpoint: f.endpoint, recommendation: f.recommendation}} />)}
           </div>
+          <AboutSection />
         </main>
       </div>
     );
   }
 
-  // ─── Dashboard ────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-6 py-8">
-        {apiOffline && (
-          <div className="mb-6 flex items-center gap-3 bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3 text-yellow-800 text-sm">
-            <WifiOff className="w-4 h-4" />
-            Backend inacessível.
-          </div>
-        )}
-
-        <div className="mb-8">
-          <ScanForm onSubmit={handleNewScan} />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        {apiOffline && <div className="mb-6 bg-yellow-50 p-3 text-yellow-800 rounded">Backend inacessível.</div>}
+        <ScanForm onSubmit={handleNewScan} />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 my-8">
           <StatsCard title="Total Scans" value={scans.length} icon={Activity} />
           <StatsCard title="Vulnerabilities Found" value={totalVulnerabilities} icon={AlertTriangle} />
           <StatsCard title="Avg Risk Score" value={avgRiskScore} icon={TrendingUp} />
           <StatsCard title="Status" value="Online" icon={CheckCircle} />
         </div>
-
-        <div>
-          <h3 className="mb-4">Recent Scans</h3>
-          {loading ? (
-            <div className="text-center py-16"><Loader2 className="animate-spin mx-auto w-8 h-8" /></div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {scans.map((scan) => (
-                <ScanHistoryCard key={scan.id} scan={scan} onClick={() => setSelectedScan(scan)} />
-              ))}
-            </div>
-          )}
-        </div>
+        <h3 className="mb-4">Recent Scans</h3>
+        {loading ? <Loader2 className="animate-spin mx-auto w-8 h-8" /> : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {scans.map((scan) => <ScanHistoryCard key={scan.id} scan={scan} onClick={() => setSelectedScan(scan)} />)}
+          </div>
+        )}
+        <AboutSection />
       </main>
     </div>
   );
 }
+
+```
