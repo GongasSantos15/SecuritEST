@@ -19,35 +19,6 @@ import {
   WifiOff
 } from "lucide-react";
 
-const STORAGE_KEY = "securitest_scans";
-const DETAILS_KEY = "securitest_scan_details";
-
-// ─── Helpers localStorage ────────────────────────────────────────────────────
-function saveToStorage(scans: ScanData[], details: Record<string, ScanResult>) {
-  try {
-    const serialized = scans.map((s) => ({ ...s, timestamp: s.timestamp.toISOString() }));
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(serialized));
-    localStorage.setItem(DETAILS_KEY, JSON.stringify(details));
-  } catch (_) {}
-}
-
-function loadFromStorage(): { scans: ScanData[]; details: Record<string, ScanResult> } {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    const rawDetails = localStorage.getItem(DETAILS_KEY);
-    if (!raw) return { scans: [], details: {} };
-    const parsed = JSON.parse(raw) as any[];
-    const scans: ScanData[] = parsed.map((s) => ({ 
-      ...s, 
-      timestamp: !isNaN(Date.parse(s.timestamp)) ? new Date(s.timestamp) : new Date() 
-    }));
-    const details: Record<string, ScanResult> = rawDetails ? JSON.parse(rawDetails) : {};
-    return { scans, details };
-  } catch (_) {
-    return { scans: [], details: {} };
-  }
-}
-
 function toScanData(s: any): ScanData {
   return {
     id: s.id,
@@ -76,9 +47,7 @@ useEffect(() => {
   
   fetchScans()
     .then((results) => {
-      console.log("Processando dados para a UI:", results);
-      
-      // Mapeamento direto e rigoroso
+      // Mapeamento direto dos dados vindos do Azure
       const mappedScans = results.map(s => ({
         id: s.id,
         url: s.target_url || "URL não especificada",
@@ -88,13 +57,12 @@ useEffect(() => {
         status: s.status || "completed"
       }));
 
-      // Atualiza o estado com os dados reais e ignora o cache
       setScans(mappedScans);
-      
-      // Opcional: Atualiza o localStorage se quiseres, mas só DEPOIS do mapeamento
-      // saveToStorage(mappedScans, ...); 
     })
-    .catch(err => console.error("Erro fatal na carga:", err))
+    .catch(err => {
+      console.error("Erro ao carregar scans da API:", err);
+      setScans([]); // Estado vazio em caso de erro
+    })
     .finally(() => setLoading(false));
 }, []);
 
@@ -107,7 +75,6 @@ useEffect(() => {
         const updated = [scanData, ...prev];
         const updatedDetails = { ...scanDetails, [result.id]: result };
         setScanDetails(updatedDetails);
-        saveToStorage(updated, updatedDetails);
         return updated;
       });
       setSelectedScan(scanData);
@@ -131,7 +98,6 @@ useEffect(() => {
         const updated = [scanData, ...prev];
         const updatedDetails = { ...scanDetails, [localId]: localResult };
         setScanDetails(updatedDetails);
-        saveToStorage(updated, updatedDetails);
         return updated;
       });
       setSelectedScan(scanData);
