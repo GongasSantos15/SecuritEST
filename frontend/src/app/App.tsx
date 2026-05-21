@@ -37,7 +37,10 @@ function loadFromStorage(): { scans: ScanData[]; details: Record<string, ScanRes
     const rawDetails = localStorage.getItem(DETAILS_KEY);
     if (!raw) return { scans: [], details: {} };
     const parsed = JSON.parse(raw) as any[];
-    const scans: ScanData[] = parsed.map((s) => ({ ...s, timestamp: new Date(s.timestamp) }));
+    const scans: ScanData[] = parsed.map((s) => ({ 
+      ...s, 
+      timestamp: !isNaN(Date.parse(s.timestamp)) ? new Date(s.timestamp) : new Date() 
+    }));
     const details: Record<string, ScanResult> = rawDetails ? JSON.parse(rawDetails) : {};
     return { scans, details };
   } catch (_) {
@@ -75,9 +78,9 @@ export default function App() {
 
     fetchScans()
       .then((results) => {
-        // 🚀 CORREÇÃO: Atualiza SEMPRE, mesmo que os results venham vazios.
-        // Assim, se limpares a BD do Cosmos, o site limpa a interface também.
-        const fresh = results.map(toScanData);
+        // Filtra itens inválidos antes de processar
+        const validResults = results.filter(r => r.id && r.timestamp);
+        const fresh = validResults.map(toScanData);
         const details: Record<string, ScanResult> = {};
         results.forEach((r) => (details[r.id] = r));
         
@@ -136,7 +139,7 @@ export default function App() {
 
   const totalVulnerabilities = scans.reduce((sum, s) => sum + s.vulnerabilities, 0);
   const avgRiskScore = scans.length
-    ? Math.round(scans.reduce((sum, s) => sum + s.riskScore, 0) / scans.length)
+    ? Math.round(scans.reduce((sum, s) => sum + (Number(s.riskScore) || 0), 0) / scans.length)
     : 0;
 
   // ─── Vista detalhe ────────────────────────────────────────────────────────
