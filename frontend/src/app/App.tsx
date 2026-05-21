@@ -51,13 +51,10 @@ function loadFromStorage(): { scans: ScanData[]; details: Record<string, ScanRes
 function toScanData(s: ScanResult): ScanData {
   return {
     id: s.id,
-    // Garante que lê o target_url da API
-    url: s.target_url || "URL não especificada", 
+    url: s.target_url || "URL não especificada", // s.target_url em vez de s.url
     timestamp: s.started_at ? new Date(s.started_at) : new Date(),
-    // Garante que lê o final_score da API
-    riskScore: s.final_score || 0,
-    // Garante que lê o findings_count da API
-    vulnerabilities: s.findings_count || 0,
+    riskScore: s.final_score || 0,             // s.final_score em vez de s.riskScore
+    vulnerabilities: s.findings_count || 0,     // s.findings_count em vez de s.vulnerabilities
     status: s.status
   };
 }
