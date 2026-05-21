@@ -33,11 +33,17 @@ export async function fetchScans(): Promise<ScanResult[]> {
     return [];
   }
 }
-
 export async function startScan(url: string): Promise<ScanResult> {
+  // O scanner exige 'base_url' e 'target_url'. 
+  // Se a 'base_url' for a própria URL que estás a scanear, envia-a nos dois campos.
+  const payload = { 
+    target_url: url,
+    base_url: url 
+  };
+
   return await safeFetch("StartScan", {
     method: "POST",
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ target_url: url })
+    body: JSON.stringify(payload)
   });
 }
