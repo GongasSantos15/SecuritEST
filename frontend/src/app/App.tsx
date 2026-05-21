@@ -47,13 +47,14 @@ function loadFromStorage(): { scans: ScanData[]; details: Record<string, ScanRes
     return { scans: [], details: {} };
   }
 }
-
 function toScanData(s: any): ScanData {
   return {
-    // Usa o campo que vem do teu Cosmos DB
     id: s.id,
-    url: s.target_url || "URL não especificada",
+    // Verifica primeiro o campo real da BD (target_url), depois tenta 'url'
+    url: s.target_url || s.url || "URL não especificada",
+    // Converte a string de data que vem da BD para objeto Date
     timestamp: s.started_at ? new Date(s.started_at) : new Date(),
+    // Mapeia o score e vulnerabilidades corretamente
     riskScore: s.final_score ?? 0,
     vulnerabilities: s.findings_count ?? 0,
     status: s.status || "completed"
@@ -69,38 +70,25 @@ export default function App() {
 
  // ─── Iniciar: CosmosDB → fallback localStorage ───────────────────────────
  useEffect(() => {
-    const { scans: cached, details: cachedDetails } = loadFromStorage();
-    if (cached.length > 0) {
-      setScans(cached);
-      setScanDetails(cachedDetails);
-    }
+  setLoading(true);
+  fetchScans()
+    .then((results) => {
+      console.log("Dados brutos recebidos:", results); // Vê na consola o que chega!
 
-    fetchScans()
-      .then((results) => {
-        // SEGURANÇA: Garante que estamos a trabalhar com um array
-        const scanArray = Array.isArray(results) ? results : 
-                          (results && typeof results === 'object' && 'data' in results) ? results.data : 
-                          [];
-
-        if (!Array.isArray(scanArray)) {
-          throw new Error("Formato de dados inesperado da API");
-        }
-
-        const fresh = scanArray.map(toScanData);
-        const details: Record<string, ScanResult> = {};
-        scanArray.forEach((r) => (details[r.id] = r));
-        
-        setScans(fresh);
-        setScanDetails(details);
-        saveToStorage(fresh, details);
-        setApiOffline(false);
-      })
-      .catch((err) => {
-        console.error("Falha ao comunicar com Cosmos DB:", err);
-        setApiOffline(true);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+      // Se 'results' for um array, mapeia todos. Se for um objeto, mete num array.
+      const dataArray = Array.isArray(results) ? results : [results];
+      
+      const fresh = dataArray.map(toScanData);
+      setScans(fresh);
+      
+      // Guarda os detalhes completos para quando clicares no scan
+      const detailsMap: Record<string, any> = {};
+      dataArray.forEach(item => { detailsMap[item.id] = item; });
+      setScanDetails(detailsMap);
+    })
+    .catch(err => console.error("Erro na API:", err))
+    .finally(() => setLoading(false));
+}, []);
 
   // ─── Novo scan ────────────────────────────────────────────────────────────
   const handleNewScan = async (url: string) => {
