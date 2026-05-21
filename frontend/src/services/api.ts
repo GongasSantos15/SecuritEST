@@ -22,32 +22,35 @@ export interface ScanResult {
   vulnerabilityCount: number;
 }
 
-// ─── Listar todos os scans (Bate na porta com GET) ─────────────
-export async function fetchScans(): Promise<ScanResult[]> {
-  // Constrói o URL dinamicamente
-  const response = await fetch(`${BASE_API_URL}/api/scans`, {
-    method: "GET"
-  });
-
+// Função utilitária de fetch com tratamento de erro
+async function safeFetch(endpoint: string, options: RequestInit = {}) {
+  const url = `${BASE_API_URL}/${endpoint.replace(/^\//, "")}`;
+  console.log(`A chamar: ${url}`); // Debug no F12
+  
+  const response = await fetch(url, options);
+  
   if (!response.ok) {
-    throw new Error(`Erro ao carregar scans: ${response.status}`);
+    throw new Error(`Erro ${response.status} ao contactar ${endpoint}`);
   }
-
-  const data = await response.json();
-  return Array.isArray(data) ? data : (data.items || []);
+  return response.json();
 }
 
-// ─── Disparar novo scan (Bate na MESMA porta, mas com POST) ────
-export async function startScan(url: string): Promise<ScanResult> {
-  const response = await fetch(`${BASE_API_URL}/api/StartScan`, {
-    method: "POST",
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url })
-  });
-
-  if (!response.ok) {
-    throw new Error(`Erro ao iniciar scan: ${response.status}`);
+export async function fetchScans(): Promise<ScanResult[]> {
+  try {
+    const data = await safeFetch("scans");
+    return Array.isArray(data) ? data : (data.items || []);
+  } catch (err) {
+    console.error("Erro no fetchScans:", err);
+    return []; // Retorna vazio em vez de crashar a app
   }
+}
 
+export async function startScan(url: string): Promise<ScanResult> {
+  return await safeFetch("StartScan", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url }),
+  });
+}
   return await response.json();
 }
