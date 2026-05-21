@@ -48,13 +48,13 @@ function loadFromStorage(): { scans: ScanData[]; details: Record<string, ScanRes
   }
 }
 
-function toScanData(s: ScanResult): ScanData {
+function toScanData(s: any): ScanData {
   return {
     id: s.id,
-    url: s.url,
-    timestamp: new Date(s.timestamp),
-    riskScore: s.riskScore,
-    vulnerabilities: s.vulnerabilityCount ?? s.vulnerabilities?.length ?? 0,
+    url: s.target_url || s.url,
+    timestamp: new Date(s.started_at || s.timestamp),
+    riskScore: s.final_score ?? s.riskScore ?? 0,
+    vulnerabilities: s.findings_count ?? s.vulnerabilities?.length ?? 0,
     status: s.status
   };
 }
@@ -150,7 +150,7 @@ export default function App() {
   // ─── Vista detalhe ────────────────────────────────────────────────────────
   if (selectedScan) {
     const detail = scanDetails[selectedScan.id];
-    const vulnerabilities = detail?.vulnerabilities ?? [];
+    const findings = detail?.findings ?? [];
 
     return (
       <div className="min-h-screen bg-background">
@@ -201,7 +201,7 @@ export default function App() {
                   key={f.id + f.endpoint} 
                   vulnerability={{
                     id: f.id, 
-                    title: f.name, 
+                    title: f.name, // Ajuste para o campo 'name' que existe no JSON
                     severity: f.severity > 5 ? "critical" : "medium", 
                     category: f.category, 
                     description: f.description || "", 
