@@ -71,25 +71,30 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [apiOffline, setApiOffline] = useState(false);
 
- // ─── Iniciar: CosmosDB → fallback localStorage ───────────────────────────
- useEffect(() => {
+useEffect(() => {
   setLoading(true);
+  
   fetchScans()
     .then((results) => {
-      // Garante que é um array, independentemente do formato da resposta
-      const dataArray = Array.isArray(results) ? results : (results.scans || []);
+      console.log("Processando dados para a UI:", results);
       
-      const fresh = dataArray.map(toScanData);
-      console.log("Dados mapeados para o Dashboard:", fresh);
-      setScans(fresh);
+      // Mapeamento direto e rigoroso
+      const mappedScans = results.map(s => ({
+        id: s.id,
+        url: s.target_url || "URL não especificada",
+        timestamp: s.started_at ? new Date(s.started_at) : new Date(),
+        riskScore: s.final_score ?? 0,
+        vulnerabilities: s.findings_count ?? 0,
+        status: s.status || "completed"
+      }));
+
+      // Atualiza o estado com os dados reais e ignora o cache
+      setScans(mappedScans);
       
-      const detailsMap: Record<string, ScanResult> = {};
-      dataArray.forEach(item => { 
-        detailsMap[item.id] = item; 
-      });
-      setScanDetails(detailsMap);
+      // Opcional: Atualiza o localStorage se quiseres, mas só DEPOIS do mapeamento
+      // saveToStorage(mappedScans, ...); 
     })
-    .catch(err => console.error("Erro na API:", err))
+    .catch(err => console.error("Erro fatal na carga:", err))
     .finally(() => setLoading(false));
 }, []);
 
