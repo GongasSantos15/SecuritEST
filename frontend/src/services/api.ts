@@ -3,12 +3,12 @@ const API_BASE = (import.meta.env.VITE_API_URL || "https://func-securitest-x7wdl
 
 export interface ScanResult {
   id: string;
-  target_url: string;
-  started_at: string;
+  target_url: string;      // Mudado para obrigatório
+  started_at: string;      // Mudado para obrigatório
   final_score: number;
   findings_count: number;
   status: "completed" | "in-progress" | "failed";
-  findings: any[];
+  findings: any[];         // Array real de vulnerabilidades
 }
 
 async function safeFetch(endpoint: string, options: RequestInit = {}) {
@@ -27,12 +27,18 @@ async function safeFetch(endpoint: string, options: RequestInit = {}) {
 
 export async function fetchScans(): Promise<ScanResult[]> {
   try {
-    return await safeFetch("scans");
+    const data = await safeFetch("scans");
+    console.log("Resposta real da API:", data); // Olhe para a consola (F12)
+    
+    // Se a API retornar um array, devolve-o diretamente.
+    // Se a API retornar um objeto encapsulado (ex: { scans: [...] }), aceda à chave correta.
+    return Array.isArray(data) ? data : (data.scans || [data]);
   } catch (err) {
     console.error("Erro no fetchScans:", err);
     return [];
   }
 }
+
 export async function startScan(url: string): Promise<ScanResult> {
   // O scanner exige 'base_url' e 'target_url'. 
   // Se a 'base_url' for a própria URL que estás a scanear, envia-a nos dois campos.
