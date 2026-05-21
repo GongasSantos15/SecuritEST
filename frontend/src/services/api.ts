@@ -1,7 +1,5 @@
-const BASE_URL = import.meta.env.VITE_API_BASE_URL as string;
-
-const GET_SCANS_URL = `${BASE_URL}/api/scans`;
-const START_SCAN_URL = `${BASE_URL}/api/StartScan`;
+// Lemos o URL exato e completo que o GitHub Actions injetou
+const API_URL = import.meta.env.VITE_API_URL as string;
 
 export interface Vulnerability {
   id: string;
@@ -24,9 +22,9 @@ export interface ScanResult {
   vulnerabilityCount: number;
 }
 
-// ─── Listar todos os scans (GET) ─────────────────────────────────────────────
+// ─── Listar todos os scans (Bate na porta com GET) ─────────────
 export async function fetchScans(): Promise<ScanResult[]> {
-  const response = await fetch(GET_SCANS_URL, {
+  const response = await fetch(API_URL, {
     method: "GET"
   });
 
@@ -35,14 +33,14 @@ export async function fetchScans(): Promise<ScanResult[]> {
   }
 
   const data = await response.json();
-
-  // 🚀 CORREÇÃO: Se a Function devolver um Array, usa-o diretamente!
+  
+  // Se a BD devolver array usa direto, se não, procura .items
   return Array.isArray(data) ? data : (data.items || []);
 }
 
-// ─── Disparar novo scan (POST) ────────────────────────────────────────────────
+// ─── Disparar novo scan (Bate na MESMA porta, mas com POST) ────
 export async function startScan(url: string): Promise<ScanResult> {
-  const res = await fetch(START_SCAN_URL, {
+  const res = await fetch(API_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -54,7 +52,6 @@ export async function startScan(url: string): Promise<ScanResult> {
     const err = await res.json().catch(() => ({
       error: res.statusText
     }));
-
     throw new Error(err.error ?? `Erro ${res.status}`);
   }
 
