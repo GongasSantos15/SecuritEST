@@ -1,58 +1,43 @@
-// No topo do ficheiro, guarde apenas a base, sem o caminho final
-const BASE_API_URL = import.meta.env.VITE_API_URL.replace(/\/api\/.*$/, "");
+// Usa o import.meta.env, mas com um fallback direto se falhar
+const API_BASE = (import.meta.env.VITE_API_URL || "https://func-securitest-x7wdl.azurewebsites.net/api").replace(/\/api\/.*$/, "");
 
-export interface Finding {
-  id: string;
-  name: string;
-  owasp: string;
-  endpoint: string;
-  severity: number;
-  recommendation: string;
-  category: string;
-  description: string;
-}
 export interface ScanResult {
   id: string;
   target_url: string;
-  status: "completed" | "in-progress" | "failed";
-  final_score: number;
-  findings: Finding[];
-  findings_count: number;
   started_at: string;
+  final_score: number;
+  findings_count: number;
+  status: "completed" | "in-progress" | "failed";
+  findings: any[];
 }
 
-// ─── Funções Exportadas ─────────────
-export async function fetchScans(): Promise<ScanResult[]> {
-  // Constrói o URL dinamicamente
-  const response = await fetch(`${BASE_API_URL}/api/scans`, {
-    method: "GET"
-  });
-
+async function safeFetch(endpoint: string, options: RequestInit = {}) {
+  // Constrói a URL de forma segura
+  const url = `${API_BASE}/api/${endpoint}`;
+  
+  const response = await fetch(url, options);
+  
   if (!response.ok) {
-    throw new Error(`Erro ao carregar scans: ${response.status}`);
+    const errorText = await response.text();
+    throw new Error(`HTTP ${response.status}: ${errorText}`);
   }
+  
+  return await response.json();
+}
 
-  const data = await response.json();
-  return Array.isArray(data) ? data : (data.items || []);
+export async function fetchScans(): Promise<ScanResult[]> {
+  try {
+    return await safeFetch("scans");
+  } catch (err) {
+    console.error("Erro no fetchScans:", err);
+    return [];
+  }
 }
 
 export async function startScan(url: string): Promise<ScanResult> {
-  // Vamos enviar exatamente o que a função espera (provavelmente um objeto com a URL)
-  const payload = { target_url: url }; 
-
-  const response = await fetch(`${API_BASE}/StartScan`, {
+  return await safeFetch("StartScan", {
     method: "POST",
-    headers: { 
-      'Content-Type': 'application/json' 
-    },
-    body: JSON.stringify(payload)
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ target_url: url })
   });
-
-  if (!response.ok) {
-    // Aqui capturamos o erro 500 que o Azure está a devolver
-    const errorText = await response.text();
-    throw new Error(`Erro ${response.status}: ${errorText}`);
-  }
-
-  return await response.json();
 }
