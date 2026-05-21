@@ -48,14 +48,17 @@ function loadFromStorage(): { scans: ScanData[]; details: Record<string, ScanRes
   }
 }
 
-function toScanData(s: ScanResult): ScanData {
+function toScanData(s: any): ScanData {
   return {
-    id: s.id,
-    url: s.target_url,
-    timestamp: new Date(s.started_at),
-    riskScore: s.final_score,
-    vulnerabilities: s.findings_count,
-    status: s.status
+    id: s.id || "unknown",
+    // Usa o campo target_url da BD, com fallback
+    url: s.target_url || s.url || "URL não especificada",
+    // Tenta converter a data, se falhar, usa a data atual
+    timestamp: s.started_at ? new Date(s.started_at) : (s.timestamp ? new Date(s.timestamp) : new Date()),
+    // Garante que o número é válido
+    riskScore: typeof s.final_score === 'number' ? s.final_score : 0,
+    vulnerabilities: typeof s.findings_count === 'number' ? s.findings_count : 0,
+    status: s.status || "completed"
   };
 }
 
