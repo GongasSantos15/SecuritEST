@@ -36,7 +36,8 @@ export async function fetchScans(): Promise<ScanResult[]> {
 
   const data = await response.json();
 
-  return data.items || [];
+  // 🚀 CORREÇÃO: Se a Function devolver um Array, usa-o diretamente!
+  return Array.isArray(data) ? data : (data.items || []);
 }
 
 // ─── Disparar novo scan (POST) ────────────────────────────────────────────────
