@@ -161,9 +161,6 @@ export default function App() {
               </div>
             )}
           </div>
-          
-          {/* Adicionado aqui para aparecer no detalhe */}
-          <AboutSection />
         </main>
       </div>
     );
