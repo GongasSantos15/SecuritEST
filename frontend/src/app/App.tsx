@@ -48,12 +48,12 @@ useEffect(() => {
   fetchScans()
     .then((results) => {
       // Mapeamento direto dos dados vindos do Azure
-      const mappedScans = results.map(s => ({
+      const mappedScans: ScanData[] = results.map((s: any) => ({
         id: s.id,
         url: s.target_url || "URL não especificada",
         timestamp: s.started_at ? new Date(s.started_at) : new Date(),
-        riskScore: s.final_score ?? 0,
-        vulnerabilities: s.findings_count ?? 0,
+        riskScore: typeof s.final_score === 'number' ? s.final_score : 0,
+        vulnerabilities: typeof s.findings_count === 'number' ? s.findings_count : 0,
         status: s.status || "completed"
       }));
 
