@@ -1,8 +1,3 @@
-O problema é que o código que te enviei no último passo estava **incompleto** no bloco do `Dashboard` (usei `/* ... */` como atalho, e tu copiaste esse atalho para o ficheiro). Isso eliminou toda a interface principal do teu site.
-
-Aqui está o **ficheiro completo e funcional**. Podes fazer *copy-paste* deste código diretamente para o teu `App.tsx` que tudo voltará ao normal (Dashboard, Scans e AboutSection):
-
-```tsx
 import { useState, useEffect } from "react";
 import { Header } from "./components/Header";
 import { StatsCard } from "./components/StatsCard";
@@ -175,5 +170,3 @@ export default function App() {
     </div>
   );
 }
-
-```
