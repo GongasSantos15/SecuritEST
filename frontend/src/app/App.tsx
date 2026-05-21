@@ -46,16 +46,13 @@ function loadFromStorage(): { scans: ScanData[]; details: Record<string, ScanRes
 }
 
 function toScanData(s: ScanResult): ScanData {
-  // Fazemos um log para debug caso estejas a ver a consola F12
-  console.log("A mapear item:", s);
-  
   return {
-    id: s.id || "unknown-id",
-    url: s.target_url || "URL desconhecida",
-    timestamp: s.started_at ? new Date(s.started_at) : new Date(),
-    riskScore: Number(s.final_score) || 0,
-    vulnerabilities: Number(s.findings_count) || 0,
-    status: s.status || "completed"
+    id: s.id,
+    url: s.target_url,
+    timestamp: new Date(s.started_at),
+    riskScore: s.final_score,
+    vulnerabilities: s.findings_count,
+    status: s.status
   };
 }
 
@@ -110,18 +107,15 @@ export default function App() {
       .finally(() => setLoading(false));
   }, []);
 
-const handleNewScan = async (url: string) => {
-  try {
-    const result = await startScan(url);
-    const scanData = toScanData(result);
-    setScans((prev) => [scanData, ...prev]);
-    setScanDetails((prev) => ({ ...prev, [result.id]: result }));
-    setSelectedScan(scanData);
-  } catch (err: any) {
-    console.error("Erro detalhado:", err); // <--- VÊ ISTO NO F12 CONSOLE
-    alert("Falha ao iniciar o scan: " + err.message); // <--- VÊ A MENSAGEM AQUI
-  }
-};
+  const handleNewScan = async (url: string) => {
+    try {
+      const result = await startScan(url);
+      const scanData = toScanData(result);
+      setScans((prev) => [scanData, ...prev]);
+      setScanDetails((prev) => ({ ...prev, [result.id]: result }));
+      setSelectedScan(scanData);
+    } catch (err) { alert("Falha ao iniciar scan."); }
+  };
 
   const totalVulnerabilities = scans.reduce((sum, s) => sum + s.vulnerabilities, 0);
   const avgRiskScore = scans.length ? Math.round(scans.reduce((sum, s) => sum + (Number(s.riskScore) || 0), 0) / scans.length) : 0;
@@ -145,11 +139,25 @@ const handleNewScan = async (url: string) => {
           </div>
           <h3 className="mb-4">Vulnerabilities Detected ({findings.length})</h3>
           <div className="space-y-4">
-            {findings.map((f) => <VulnerabilityCard key={f.id + f.endpoint} vulnerability={{id: f.id, title: f.name, severity: f.severity > 5 ? "critical" : "medium", category: f.category, description: f.description || "", endpoint: f.endpoint, recommendation: f.recommendation}} />)}
+            {Array.isArray(findings) ? (
+              findings.map((f) => (
+                <VulnerabilityCard 
+                  key={f.id + f.endpoint} 
+                  vulnerability={{
+                    id: f.id, 
+                    title: f.name, 
+                    severity: f.severity > 5 ? "critical" : "medium", 
+                    category: f.category, 
+                    description: f.description || "", 
+                    endpoint: f.endpoint, 
+                    recommendation: f.recommendation
+                  }} 
+                />
+              ))
+            ) : (
+              <p className="text-muted-foreground italic">No vulnerabilities found.</p>
+            )}
           </div>
-          <AboutSection />
-        </main>
-      </div>
     );
   }
 
