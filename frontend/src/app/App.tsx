@@ -85,20 +85,28 @@ useEffect(() => {
     try {
       await startScan(url);
 
+      // Espera backend terminar
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
       const updatedResults = await fetchScans();
 
-      const mappedScans: ScanData[] = updatedResults.map((s: any) => toScanData(s));
+      const mappedScans: ScanData[] = updatedResults.map((s: any) =>
+        toScanData(s)
+      );
 
       const details: Record<string, any> = {};
+
       updatedResults.forEach((s: any) => {
         const id = s.id || s.scan_id;
         details[id] = s;
       });
 
       setScans(mappedScans);
+
       setScanDetails(details);
 
       const newestScan = mappedScans[0];
+
       setSelectedScan(newestScan);
 
       setApiOffline(false);
