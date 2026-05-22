@@ -41,87 +41,79 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [apiOffline, setApiOffline] = useState(false);
 
-useEffect(() => {
-  setLoading(true);
+  useEffect(() => {
+    setLoading(true);
 
-  fetchScans()
-    .then((results) => {
-      const mappedScans: ScanData[] = results.map((s: any) => {
-        const id = s.id || s.scan_id;
+    fetchScans()
+      .then((results: ScanResult[]) => {
+        const mappedScans: ScanData[] = results.map((s: any) => toScanData(s));
 
-        return {
-          id,
-          url: s.target_url || "URL não especificada",
-          timestamp: s.started_at ? new Date(s.started_at) : new Date(),
-          riskScore: typeof s.final_score === "number" ? Math.round(s.final_score) : 0,
-          vulnerabilities: Array.isArray(s.findings)
-            ? s.findings.length
-            : typeof s.findings_count === "number"
-              ? s.findings_count
-              : 0,
-          status: s.status || "completed"
-        };
-      });
+        const details: Record<string, ScanResult> = {};
 
-      const details: Record<string, any> = {};
+        results.forEach((s: any) => {
+          const id = s.id || s.scan_id;
+          if (id) details[id] = s;
+        });
 
-      results.forEach((s: any) => {
-        const id = s.id || s.scan_id;
-        details[id] = s;
-      });
+        setScans(mappedScans);
+        setScanDetails(details);
+      })
+      .catch((err: unknown) => {
+        console.error("Erro ao carregar scans da API:", err);
+        setScans([]);
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
-      setScans(mappedScans);
-      setScanDetails(details);
-    })
-    .catch((err) => {
-      console.error("Erro ao carregar scans da API:", err);
-      setScans([]);
-    })
-    .finally(() => setLoading(false));
-}, []);
-
-  // ─── Novo scan ────────────────────────────────────────────────────────────
   const handleNewScan = async (url: string) => {
     try {
       await startScan(url);
 
-      // Espera backend terminar
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await new Promise<void>((resolve) => setTimeout(resolve, 2000));
 
-      const updatedResults = await fetchScans();
+      const updatedResults: ScanResult[] = await fetchScans();
 
       const mappedScans: ScanData[] = updatedResults.map((s: any) =>
         toScanData(s)
       );
 
-      const details: Record<string, any> = {};
+      const details: Record<string, ScanResult> = {};
 
       updatedResults.forEach((s: any) => {
         const id = s.id || s.scan_id;
-        details[id] = s;
-      });
-
-      const newestScan = mappedScans.reduce((latest, current) => {
-        return new Date(current.timestamp) > new Date(latest.timestamp)
-          ? current
-          : latest;
+        if (id) details[id] = s;
       });
 
       setScans(mappedScans);
       setScanDetails(details);
 
-      setSelectedScan(newestScan);
+      const newestScan = mappedScans.reduce(
+        (latest: ScanData, current: ScanData) =>
+          new Date(current.timestamp) > new Date(latest.timestamp)
+            ? current
+            : latest
+      );
 
+      setSelectedScan(newestScan);
       setApiOffline(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Erro no Scan:", err);
       setApiOffline(true);
     }
   };
 
-  const totalVulnerabilities = scans.reduce((sum, s) => sum + s.vulnerabilities, 0);
-  const avgRiskScore = scans.length
-    ? Math.round(scans.reduce((sum, s) => sum + (Number(s.riskScore) || 0), 0) / scans.length)
+  const totalVulnerabilities: number = scans.reduce(
+    (sum: number, s: ScanData) => sum + (s.vulnerabilities || 0),
+    0
+  );
+
+  const avgRiskScore: number = scans.length
+    ? Math.round(
+        scans.reduce(
+          (sum: number, s: ScanData) => sum + (Number(s.riskScore) || 0),
+          0
+        ) / scans.length
+      )
     : 0;
 
   // ─── Vista detalhe ────────────────────────────────────────────────────────
@@ -169,13 +161,14 @@ useEffect(() => {
               <RiskScoreGauge score={selectedScan.riskScore} />
             </div>
           </div>
-          
+
           <h3 className="mb-4">Vulnerabilities Detected ({findings.length})</h3>
+
           <div className="space-y-4">
             {findings.length === 0 ? (
               <p className="text-muted-foreground italic">No vulnerabilities found.</p>
             ) : (
-              findings.map((f, index) => (
+              findings.map((f: any, index: number) => (
                 <VulnerabilityCard
                   key={`${selectedScan.id}-${f.id}-${f.endpoint}-${index}`}
                   vulnerability={{
@@ -185,8 +178,8 @@ useEffect(() => {
                       Number(f.severity) >= 7
                         ? "critical"
                         : Number(f.severity) >= 4
-                          ? "medium"
-                          : "low",
+                        ? "medium"
+                        : "low",
                     category: f.owasp || f.category || "General",
                     description: f.evidence || f.description || "No description provided.",
                     endpoint: f.endpoint || "Unknown endpoint",
@@ -259,7 +252,11 @@ useEffect(() => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {scans.map((scan) => (
-                <ScanHistoryCard key={scan.id} scan={scan} onClick={() => setSelectedScan(scan)} />
+                <ScanHistoryCard
+                  key={scan.id}
+                  scan={scan}
+                  onClick={() => setSelectedScan(scan)}
+                />
               ))}
             </div>
           )}
@@ -272,18 +269,6 @@ useEffect(() => {
             It automatically analyzes exposed APIs, identifies potential vulnerabilities based on
             OWASP API Security Top 10, and generates comprehensive risk reports.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            {[
-              { title: "Container-Based", desc: "Scalable scanning engine deployed in Azure Container Instances" },
-              { title: "Serverless Computing", desc: "Azure Functions handle request processing and report generation" },
-              { title: "NoSQL Storage", desc: "Cosmos DB stores scan history and vulnerability data at scale" }
-            ].map((item) => (
-              <div key={item.title} className="bg-accent rounded-lg p-4">
-                <h4 className="mb-2">{item.title}</h4>
-                <p className="text-muted-foreground">{item.desc}</p>
-              </div>
-            ))}
-          </div>
         </div>
       </main>
     </div>
