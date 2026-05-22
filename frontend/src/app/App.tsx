@@ -165,16 +165,20 @@ useEffect(() => {
           
           <div className="space-y-4">
             {(() => {
-              if (!findings || findings.length === 0) {
+              const currentFindings = scans?.findings || [];
+              
+              if (!currentFindings || currentFindings.length === 0) {
                 return <p className="text-muted-foreground italic">No vulnerabilities found.</p>;
               }
               
-              return findings.map((f, index) => (
+              return currentFindings.map((f, index) => (
                 <VulnerabilityCard 
-                  key={`${f.id}-${index}`} 
+                  // 💡 Ajuste na key para evitar colisões de renderização entre páginas diferentes
+                  key={`${scan?.id || 'scan'}-${f.id || index}-${index}`} 
                   vulnerability={{
                     id: f.id, 
                     title: f.name || "Unknown Vulnerability",
+                    // Garante que o cálculo da severidade bate certo com o que vem da API
                     severity: (f.severity > 5) ? "critical" : "medium",
                     category: f.category || "General",
                     description: f.description || "No description provided.",
@@ -223,10 +227,10 @@ useEffect(() => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <StatsCard title="Total Scans" value={scans.length} icon={Activity} trend="+12% from last week" trendUp={true} />
-          <StatsCard title="Vulnerabilities Found" value={totalVulnerabilities} icon={AlertTriangle} trend="+8 this week" trendUp={false} />
-          <StatsCard title="Avg Risk Score" value={avgRiskScore} icon={TrendingUp} trend="-5 points" trendUp={true} />
-          <StatsCard title="APIs Secured" value={scans.filter((s) => s.riskScore < 30).length} icon={CheckCircle} trend="+2 this week" trendUp={true} />
+          <StatsCard title="Total Scans" value={scans.length} icon={Activity} />
+          <StatsCard title="Vulnerabilities Found" value={totalVulnerabilities} icon={AlertTriangle} />
+          <StatsCard title="Avg Risk Score" value={avgRiskScore} icon={TrendingUp} />
+          <StatsCard title="APIs Secured" value={scans.filter((s) => s.riskScore < 30).length} icon={CheckCircle} />
         </div>
 
         <div>
