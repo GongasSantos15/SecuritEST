@@ -105,7 +105,11 @@ useEffect(() => {
 
       setScanDetails(details);
 
-      const newestScan = mappedScans[0];
+      const newestScan = mappedScans.reduce((latest, current) => {
+        return new Date(current.timestamp) > new Date(latest.timestamp)
+          ? current
+          : latest;
+      });
 
       setSelectedScan(newestScan);
 
