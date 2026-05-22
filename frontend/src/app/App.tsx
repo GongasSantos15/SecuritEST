@@ -56,9 +56,9 @@ useEffect(() => {
       status: s.status || "completed"
     }));
 
-      const details: Record<string, any> = {};
+    const details: Record<string, any> = {};
       results.forEach((s: any) => {
-      details[s.id  s.scan_id] = s;
+      details[s.id] = s;
     });
 
       setScans(mappedScans);
