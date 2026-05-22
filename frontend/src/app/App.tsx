@@ -15,8 +15,7 @@ import {
   Download,
   Share2,
   Clock,
-  Loader2,
-  WifiOff
+  Loader2
 } from "lucide-react";
 
 function toScanData(s: any): ScanData {
@@ -39,7 +38,6 @@ export default function App() {
   const [scanDetails, setScanDetails] = useState<Record<string, ScanResult>>({});
   const [selectedScan, setSelectedScan] = useState<ScanData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [apiOffline, setApiOffline] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -67,9 +65,7 @@ export default function App() {
 
   const handleNewScan = async (url: string) => {
     try {
-      // 1. inicia scan e obtém ID do scan criado
       const created = await startScan(url);
-
       const scanId = created?.scan_id || created?.id;
 
       if (!scanId) {
@@ -79,7 +75,6 @@ export default function App() {
       let completedScan: any = null;
       let updatedResults: any[] = [];
 
-      // 2. faz polling ao scan específico
       for (let i = 0; i < 30; i++) {
         await new Promise((r) => setTimeout(r, 2000));
 
@@ -107,15 +102,11 @@ export default function App() {
       setScans(mappedScans);
       setScanDetails(details);
 
-      // 3. só seleciona o scan que tu criaste E quando estiver completed
       if (completedScan) {
         setSelectedScan(toScanData(completedScan));
       }
-
-      setApiOffline(false);
     } catch (err: any) {
       console.error("Erro no Scan:", err);
-      setApiOffline(true);
     }
   };
 
@@ -162,6 +153,7 @@ export default function App() {
                       {selectedScan.timestamp.toLocaleString()}
                     </div>
                   </div>
+
                   <div className="flex gap-2">
                     <button className="p-2 rounded-lg border border-border hover:bg-accent transition-colors">
                       <Download className="w-4 h-4" />
@@ -195,8 +187,8 @@ export default function App() {
                       Number(f.severity) >= 7
                         ? "critical"
                         : Number(f.severity) >= 4
-                        ? "medium"
-                        : "low",
+                          ? "medium"
+                          : "low",
                     category: f.owasp || f.category || "General",
                     description: f.evidence || f.description || "No description provided.",
                     endpoint: f.endpoint || "Unknown endpoint",
@@ -232,13 +224,6 @@ export default function App() {
       <Header />
       <main className="container mx-auto px-6 py-8">
 
-        {apiOffline && (
-          <div className="mb-6 flex items-center gap-3 bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-3 text-yellow-800 text-sm">
-            <WifiOff className="w-4 h-4 flex-shrink-0" />
-            Backend inacessível — a funcionar em modo offline. Os scans são guardados localmente.
-          </div>
-        )}
-
         <div className="mb-8">
           <ScanForm onSubmit={handleNewScan} />
         </div>
@@ -247,7 +232,11 @@ export default function App() {
           <StatsCard title="Total Scans" value={scans.length} icon={Activity} />
           <StatsCard title="Vulnerabilities Found" value={totalVulnerabilities} icon={AlertTriangle} />
           <StatsCard title="Avg Risk Score" value={avgRiskScore} icon={TrendingUp} />
-          <StatsCard title="APIs Secured" value={scans.filter((s: ScanData) => s.riskScore > 80).length} icon={CheckCircle} />
+          <StatsCard
+            title="APIs Secured"
+            value={scans.filter((s: ScanData) => s.riskScore > 80).length}
+            icon={CheckCircle}
+          />
         </div>
 
         <div>
