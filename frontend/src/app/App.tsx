@@ -21,16 +21,15 @@ import {
 
 function toScanData(s: any): ScanData {
   return {
-    id: s.id,
-    // Mapeamos 'target_url' para 'url'
-    url: s.target_url || "URL não especificada",
-    // Mapeamos 'started_at' para o formato Date
+    id: s.id || s.scan_id,
+    url: s.target_url || s.url || "URL não especificada",
     timestamp: s.started_at ? new Date(s.started_at) : new Date(),
-    // Mapeamos 'final_score' (número) para 'riskScore'
-    riskScore: typeof s.final_score === 'number' ? s.final_score : 0,
-    // Mapeamos 'findings_count' (número) para 'vulnerabilities'
-    vulnerabilities: typeof s.findings_count === 'number' ? s.findings_count : 0,
-    // Status vem diretamente da API
+    riskScore: typeof s.final_score === "number" ? Math.round(s.final_score) : 0,
+    vulnerabilities: Array.isArray(s.findings)
+      ? s.findings.length
+      : typeof s.findings_count === "number"
+        ? s.findings_count
+        : 0,
     status: s.status || "completed"
   };
 }
@@ -84,38 +83,27 @@ useEffect(() => {
   // ─── Novo scan ────────────────────────────────────────────────────────────
   const handleNewScan = async (url: string) => {
     try {
-      const result = await startScan(url);
-      const scanData = toScanData(result);
-      setScans((prev) => {
-        const updated = [scanData, ...prev];
-        const updatedDetails = { ...scanDetails, [result.id]: result };
-        setScanDetails(updatedDetails);
-        return updated;
+      await startScan(url);
+
+      const updatedResults = await fetchScans();
+
+      const mappedScans: ScanData[] = updatedResults.map((s: any) => toScanData(s));
+
+      const details: Record<string, any> = {};
+      updatedResults.forEach((s: any) => {
+        const id = s.id || s.scan_id;
+        details[id] = s;
       });
-      setSelectedScan(scanData);
+
+      setScans(mappedScans);
+      setScanDetails(details);
+
+      const newestScan = mappedScans[0];
+      setSelectedScan(newestScan);
+
       setApiOffline(false);
     } catch (err: any) {
       console.error("Erro no Scan:", err);
-      // API inacessível — guardar localmente sem bloquear o utilizador
-      const localId = `local_${Date.now()}`;
-      const localResult: ScanResult = {
-        id: localId,
-        scan_id: localId,
-        url,
-        timestamp: new Date().toISOString(),
-        status: "completed",
-        riskScore: 0,
-        vulnerabilities: [],
-        vulnerabilityCount: 0
-      };
-      const scanData = toScanData(localResult);
-      setScans((prev) => {
-        const updated = [scanData, ...prev];
-        const updatedDetails = { ...scanDetails, [localId]: localResult };
-        setScanDetails(updatedDetails);
-        return updated;
-      });
-      setSelectedScan(scanData);
       setApiOffline(true);
     }
   };
