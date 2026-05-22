@@ -27,8 +27,9 @@ function toScanData(s: any): ScanData {
     vulnerabilities: Array.isArray(s.findings)
       ? s.findings.length
       : Number(s.findings_count) || 0,
-    status: s.status || "completed"
-  };
+    status: s.status || "completed",
+    findings: s.findings || []
+  } as any;
 }
 
 export default function App() {
@@ -127,28 +128,32 @@ export default function App() {
             </div>
           </div>
 
-          <h3 className="mb-4">Vulnerabilities Detected ({findings.length})</h3>
+          <h3 className="mb-4">
+            Vulnerabilities Detected ({findings.length})
+          </h3>
 
           <div className="space-y-4">
             {findings.length === 0 ? (
-              <p className="text-muted-foreground italic">No vulnerabilities found.</p>
+              <p className="text-muted-foreground italic">
+                No vulnerabilities found.
+              </p>
             ) : (
               findings.map((f: any, index: number) => (
                 <VulnerabilityCard
-                  key={`${selectedScan.id}-${f.id}-${f.endpoint}-${index}`}
+                  key={`${selectedScan.id}-${index}`}
                   vulnerability={{
                     id: f.id || `${selectedScan.id}-${index}`,
-                    title: f.name || f.title || "Unknown Vulnerability",
+                    title: f.name || "Unknown",
                     severity:
                       Number(f.severity) >= 7
                         ? "critical"
                         : Number(f.severity) >= 4
-                          ? "medium"
-                          : "low",
-                    category: f.owasp || f.category || "General",
-                    description: f.evidence || f.description || "No description provided.",
-                    endpoint: f.endpoint || "Unknown endpoint",
-                    recommendation: f.recommendation || "No recommendation."
+                        ? "medium"
+                        : "low",
+                    category: f.owasp || "General",
+                    description: f.evidence || "No description",
+                    endpoint: f.endpoint || "Unknown",
+                    recommendation: f.recommendation || "No recommendation"
                   }}
                 />
               ))
