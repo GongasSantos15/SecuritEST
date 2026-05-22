@@ -67,25 +67,30 @@ export default function App() {
 
   const handleNewScan = async (url: string) => {
     try {
-      await startScan(url);
+      // 1. inicia scan e obtém ID do scan criado
+      const created = await startScan(url);
 
+      const scanId = created?.scan_id || created?.id;
+
+      if (!scanId) {
+        throw new Error("No scan_id returned from API");
+      }
+
+      let completedScan: any = null;
       let updatedResults: any[] = [];
-      let newestCompletedScan: any = null;
 
-      // polling até o scan ficar "completed"
-      for (let i = 0; i < 20; i++) {
+      // 2. faz polling ao scan específico
+      for (let i = 0; i < 30; i++) {
         await new Promise((r) => setTimeout(r, 2000));
 
         updatedResults = await fetchScans();
 
-        newestCompletedScan = updatedResults
-          .filter((s: any) => s.status === "completed")
-          .sort(
-            (a: any, b: any) =>
-              new Date(b.started_at).getTime() - new Date(a.started_at).getTime()
-          )[0];
+        completedScan = updatedResults.find(
+          (s: any) =>
+            (s.id || s.scan_id) === scanId && s.status === "completed"
+        );
 
-        if (newestCompletedScan) break;
+        if (completedScan) break;
       }
 
       const mappedScans: ScanData[] = updatedResults.map((s: any) =>
@@ -102,8 +107,9 @@ export default function App() {
       setScans(mappedScans);
       setScanDetails(details);
 
-      if (newestCompletedScan) {
-        setSelectedScan(toScanData(newestCompletedScan));
+      // 3. só seleciona o scan que tu criaste E quando estiver completed
+      if (completedScan) {
+        setSelectedScan(toScanData(completedScan));
       }
 
       setApiOffline(false);
@@ -201,7 +207,7 @@ export default function App() {
             )}
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-8">
             <h4 className="text-foreground mb-2">Azure Cloud Architecture</h4>
             <p className="text-sm text-muted-foreground mb-4">
               This scan was powered by a cloud-native architecture on Microsoft Azure, featuring:
