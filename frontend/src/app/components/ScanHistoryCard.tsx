@@ -4,7 +4,7 @@ export interface ScanData {
   id: string;
   url: string;
   timestamp: Date;
-  score: number;
+  riskScore: number;
   vulnerabilities: number;
   status: "completed" | "in-progress" | "failed";
 }
@@ -29,7 +29,7 @@ export function ScanHistoryCard({ scan, onClick }: ScanHistoryCardProps) {
     return { label: "Critical", bg: "bg-red-100", text: "text-red-700" };
   };
 
-  const badge = getRiskBadge(scan.score);
+  const badge = getRiskBadge(scan.riskScore);
 
   return (
     <div
@@ -57,8 +57,8 @@ export function ScanHistoryCard({ scan, onClick }: ScanHistoryCardProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div>
-            <p className="text-xs text-muted-foreground">Risk Score</p>
-            <p className={`text-lg ${getScoreColor(scan.score)}`}>
+            <p className="text-xs text-muted-foreground">Score</p>
+            <p className={`text-lg ${getScoreColor(scan.riskScore)}`}>
               {scan.score}/100
             </p>
           </div>
