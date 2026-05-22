@@ -47,19 +47,21 @@ useEffect(() => {
   
   fetchScans()
     .then((results) => {
-    const mappedScans: ScanData[] = results.map((s: any) => ({
-      id: s.id,
-      url: s.target_url || "URL não especificada",
-      timestamp: s.started_at ? new Date(s.started_at) : new Date(),
-      riskScore: typeof s.final_score === "number" ? Math.round(s.final_score) : 0,
-      vulnerabilities: typeof s.findings_count === "number" ? s.findings_count : 0,
-      status: s.status || "completed"
-    }));
+      const mappedScans: ScanData[] = results.map((s: any) => ({
+        id: s.id,
+        url: s.target_url || "URL não especificada",
+        timestamp: s.started_at ? new Date(s.started_at) : new Date(),
+        riskScore: typeof s.final_score === "number" ? Math.round(s.final_score) : 0,
+        vulnerabilities: typeof s.findings_count === "number" ? s.findings_count : 0,
+        status: s.status || "completed"
+      }));
 
-    const details: Record<string, any> = {};
+      const details: Record<string, any> = {};
+
       results.forEach((s: any) => {
-      details[s.id] = s;
-    });
+        const id = s.id || s.scan_id;
+        details[id] = s;
+      });
 
       setScans(mappedScans);
       setScanDetails(details);
@@ -164,30 +166,24 @@ useEffect(() => {
           <h3 className="mb-4">Vulnerabilities Detected ({findings?.length || 0})</h3>
           
           <div className="space-y-4">
-            {(() => {
-              const currentFindings = scans?.findings || [];
-              
-              if (!currentFindings || currentFindings.length === 0) {
-                return <p className="text-muted-foreground italic">No vulnerabilities found.</p>;
-              }
-              
-              return currentFindings.map((f, index) => (
-                <VulnerabilityCard 
-                  // 💡 Ajuste na key para evitar colisões de renderização entre páginas diferentes
-                  key={`${selectedScan?.id || 'scan'}-${f.id || index}-${index}`} 
+            {selectedScan?.findings?.length === 0 ? (
+              <p className="text-muted-foreground italic">No vulnerabilities found.</p>
+            ) : (
+              selectedScan?.findings?.map((f, index) => (
+                <VulnerabilityCard
+                  key={`${selectedScan.id}-${f.id || index}`}
                   vulnerability={{
-                    id: f.id, 
-                    title: f.name || "Unknown Vulnerability",
-                    // Garante que o cálculo da severidade bate certo com o que vem da API
-                    severity: (f.severity > 5) ? "critical" : "medium",
+                    id: f.id || `${selectedScan.id}-${index}`,
+                    title: f.name || f.title || "Unknown Vulnerability",
+                    severity: Number(f.severity) > 5 ? "critical" : "medium",
                     category: f.category || "General",
                     description: f.description || "No description provided.",
                     endpoint: f.endpoint,
                     recommendation: f.recommendation || "No recommendation."
-                  }} 
+                  }}
                 />
-              ));
-            })()}
+              ))
+            )}
           </div>
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
