@@ -126,11 +126,6 @@ export default function App() {
                       {selectedScan.timestamp.toLocaleString()}
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button className="p-2 rounded-lg border border-border hover:bg-accent transition-colors">
-                      <Download className="w-4 h-4" />
-                    </button>
-                  </div>
                 </div>
               </div>
             </div>
