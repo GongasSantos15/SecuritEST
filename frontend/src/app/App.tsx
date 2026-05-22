@@ -174,7 +174,7 @@ useEffect(() => {
               return currentFindings.map((f, index) => (
                 <VulnerabilityCard 
                   // 💡 Ajuste na key para evitar colisões de renderização entre páginas diferentes
-                  key={`${scan?.id || 'scan'}-${f.id || index}-${index}`} 
+                  key={`${selectedScan?.id || 'scan'}-${f.id || index}-${index}`} 
                   vulnerability={{
                     id: f.id, 
                     title: f.name || "Unknown Vulnerability",
