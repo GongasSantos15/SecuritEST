@@ -16,16 +16,16 @@ interface ScanHistoryCardProps {
 
 export function ScanHistoryCard({ scan, onClick }: ScanHistoryCardProps) {
   const getRiskColor = (score: number) => {
-    if (score >= 80) return "text-red-600";
+    if (score >= 30) return "text-red-600";
     if (score >= 50) return "text-orange-600";
-    if (score >= 30) return "text-yellow-600";
+    if (score >= 80) return "text-yellow-600";
     return "text-green-600";
   };
 
   const getRiskBadge = (score: number) => {
-    if (score >= 80) return { label: "Critical", bg: "bg-red-100", text: "text-red-700" };
+    if (score >= 30) return { label: "Critical", bg: "bg-red-100", text: "text-red-700" };
     if (score >= 50) return { label: "High", bg: "bg-orange-100", text: "text-orange-700" };
-    if (score >= 30) return { label: "Medium", bg: "bg-yellow-100", text: "text-yellow-700" };
+    if (score >= 80) return { label: "Medium", bg: "bg-yellow-100", text: "text-yellow-700" };
     return { label: "Low", bg: "bg-green-100", text: "text-green-700" };
   };
 

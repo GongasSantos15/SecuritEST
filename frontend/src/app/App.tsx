@@ -198,7 +198,7 @@ useEffect(() => {
             )}
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-2">
             <h4 className="text-foreground mb-2">Azure Cloud Architecture</h4>
             <p className="text-sm text-muted-foreground mb-4">
               This scan was powered by a cloud-native architecture on Microsoft Azure, featuring:

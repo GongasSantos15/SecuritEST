@@ -4,17 +4,17 @@ interface RiskScoreGaugeProps {
 
 export function RiskScoreGauge({ score }: RiskScoreGaugeProps) {
   const getColor = (score: number) => {
-    if (score >= 80) return "#dc2626";
-    if (score >= 50) return "#ea580c";
-    if (score >= 30) return "#ca8a04";
-    return "#16a34a";
+    if (score >= 80) return "#16a34a";
+    if (score >= 50) return "#ca8a04";
+    if (score >= 30) return "#ea580c";
+    return "#dc2626";
   };
 
   const getRiskLevel = (score: number) => {
-    if (score >= 80) return "Critical Risk";
-    if (score >= 50) return "High Risk";
-    if (score >= 30) return "Medium Risk";
-    return "Low Risk";
+    if (score >= 80) return "Low Risk";
+    if (score >= 50) return "Medium Risk";
+    if (score >= 30) return "High Risk";
+    return "Critical Risk";
   };
 
   const color = getColor(score);
