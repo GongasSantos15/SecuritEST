@@ -166,20 +166,31 @@ useEffect(() => {
           <h3 className="mb-4">Vulnerabilities Detected ({findings?.length || 0})</h3>
           
           <div className="space-y-4">
-            {selectedScan?.findings?.length === 0 ? (
-              <p className="text-muted-foreground italic">No vulnerabilities found.</p>
+            {findings.length === 0 ? (
+              <p className="text-muted-foreground italic">
+                No vulnerabilities found.
+              </p>
             ) : (
-              selectedScan?.findings?.map((f, index) => (
+              findings.map((f, index) => (
                 <VulnerabilityCard
                   key={`${selectedScan.id}-${f.id || index}`}
                   vulnerability={{
                     id: f.id || `${selectedScan.id}-${index}`,
                     title: f.name || f.title || "Unknown Vulnerability",
-                    severity: Number(f.severity) > 5 ? "critical" : "medium",
+                    severity:
+                      Number(f.severity) >= 8
+                        ? "critical"
+                        : Number(f.severity) >= 5
+                        ? "high"
+                        : Number(f.severity) >= 3
+                        ? "medium"
+                        : "low",
                     category: f.category || "General",
-                    description: f.description || "No description provided.",
+                    description:
+                      f.description || "No description provided.",
                     endpoint: f.endpoint,
-                    recommendation: f.recommendation || "No recommendation."
+                    recommendation:
+                      f.recommendation || "No recommendation."
                   }}
                 />
               ))
