@@ -44,17 +44,25 @@ export default function App() {
 
 useEffect(() => {
   setLoading(true);
-  
+
   fetchScans()
     .then((results) => {
-      const mappedScans: ScanData[] = results.map((s: any) => ({
-        id: s.id,
-        url: s.target_url || "URL não especificada",
-        timestamp: s.started_at ? new Date(s.started_at) : new Date(),
-        riskScore: typeof s.final_score === "number" ? Math.round(s.final_score) : 0,
-        vulnerabilities: typeof s.findings_count === "number" ? s.findings_count : 0,
-        status: s.status || "completed"
-      }));
+      const mappedScans: ScanData[] = results.map((s: any) => {
+        const id = s.id || s.scan_id;
+
+        return {
+          id,
+          url: s.target_url || "URL não especificada",
+          timestamp: s.started_at ? new Date(s.started_at) : new Date(),
+          riskScore: typeof s.final_score === "number" ? Math.round(s.final_score) : 0,
+          vulnerabilities: Array.isArray(s.findings)
+            ? s.findings.length
+            : typeof s.findings_count === "number"
+              ? s.findings_count
+              : 0,
+          status: s.status || "completed"
+        };
+      });
 
       const details: Record<string, any> = {};
 
@@ -66,7 +74,7 @@ useEffect(() => {
       setScans(mappedScans);
       setScanDetails(details);
     })
-    .catch(err => {
+    .catch((err) => {
       console.error("Erro ao carregar scans da API:", err);
       setScans([]);
     })
@@ -119,8 +127,8 @@ useEffect(() => {
 
   // ─── Vista detalhe ────────────────────────────────────────────────────────
   if (selectedScan) {
-    const detail = scanDetails[selectedScan.id];
-    const findings = detail?.findings ?? [];
+    const detail = selectedScan ? scanDetails[selectedScan.id] : null;
+    const findings = Array.isArray(detail?.findings) ? detail.findings : [];
 
     return (
       <div className="min-h-screen bg-background">
@@ -162,35 +170,28 @@ useEffect(() => {
               <RiskScoreGauge score={selectedScan.riskScore} />
             </div>
           </div>
-
-          <h3 className="mb-4">Vulnerabilities Detected ({findings?.length || 0})</h3>
           
+          <h3 className="mb-4">Vulnerabilities Detected ({findings.length})</h3>
           <div className="space-y-4">
             {findings.length === 0 ? (
-              <p className="text-muted-foreground italic">
-                No vulnerabilities found.
-              </p>
+              <p className="text-muted-foreground italic">No vulnerabilities found.</p>
             ) : (
               findings.map((f, index) => (
                 <VulnerabilityCard
-                  key={`${selectedScan.id}-${f.id || index}`}
+                  key={`${selectedScan.id}-${f.id}-${f.endpoint}-${index}`}
                   vulnerability={{
                     id: f.id || `${selectedScan.id}-${index}`,
                     title: f.name || f.title || "Unknown Vulnerability",
                     severity:
-                      Number(f.severity) >= 8
+                      Number(f.severity) >= 7
                         ? "critical"
-                        : Number(f.severity) >= 5
-                        ? "high"
-                        : Number(f.severity) >= 3
-                        ? "medium"
-                        : "low",
-                    category: f.category || "General",
-                    description:
-                      f.description || "No description provided.",
-                    endpoint: f.endpoint,
-                    recommendation:
-                      f.recommendation || "No recommendation."
+                        : Number(f.severity) >= 4
+                          ? "medium"
+                          : "low",
+                    category: f.owasp || f.category || "General",
+                    description: f.evidence || f.description || "No description provided.",
+                    endpoint: f.endpoint || "Unknown endpoint",
+                    recommendation: f.recommendation || "No recommendation."
                   }}
                 />
               ))
