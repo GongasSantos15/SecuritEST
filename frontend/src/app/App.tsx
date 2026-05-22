@@ -18,6 +18,7 @@ import {
   Loader2
 } from "lucide-react";
 
+// Função para normalizar o scan vindo da API, convertendo-o para um formato padrão "ScanData".
 function toScanData(s: any): ScanData {
   return {
     id: s.id || s.scan_id,
@@ -33,10 +34,13 @@ function toScanData(s: any): ScanData {
 }
 
 export default function App() {
+
+  // Variáveis a declarar
   const [scans, setScans] = useState<ScanData[]>([]);
   const [selectedScan, setSelectedScan] = useState<ScanData | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Filtra apenas os scans com estado "completed" e converte cada scan para o formato padrão usando a função toScanData. Em caso de erro limpa a lista de scans.
   useEffect(() => {
     setLoading(true);
 
@@ -48,6 +52,7 @@ export default function App() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Função que inicia um novo scan através de URL. Verifica o estado do scan e quando está "completed", atualiza a UI e mostra as suas informações.
   const handleNewScan = async (url: string) => {
     try {
       const created = await startScan(url);
@@ -83,11 +88,13 @@ export default function App() {
     }
   };
 
+  // Cálculo do total das vulnerabilidades detetadas pelo scanner
   const totalVulnerabilities = scans.reduce(
     (sum: number, s: ScanData) => sum + s.vulnerabilities,
     0
   );
 
+  // Calcula a média de todos os scans, arredondando o valor.
   const avgRiskScore = scans.length
     ? Math.round(
         scans.reduce(
@@ -97,7 +104,7 @@ export default function App() {
       )
   : 0;
 
-  // ─── DETALHE ─────────────────────────────────────────────
+  // Mostra o scan selecionado e as suas informações (URL, data, score, vulnerabilidades, risco, ...)
   if (selectedScan) {
     const findings = (selectedScan as any).findings || [];
 
@@ -185,7 +192,7 @@ export default function App() {
     );
   }
 
-  // ─── DASHBOARD ─────────────────────────────────────────────
+  // Mostra 3 cartões com o total de scans, o nº de vulnerabilidades encontradas, a média de todos os scans e o nº de APIs seguras (score > 80), assim como uma pequena informação sobre a aplicação.
   return (
     <div className="min-h-screen bg-background">
       <Header />

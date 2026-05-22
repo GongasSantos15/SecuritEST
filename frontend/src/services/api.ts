@@ -1,6 +1,7 @@
 // Usa o import.meta.env, mas com um fallback direto se falhar
 const API_BASE = (import.meta.env.VITE_API_URL || "https://func-securitest-x7wdl.azurewebsites.net/api").replace(/\/api\/.*$/, "");
 
+// Objeto de scan que define as suas propriedades e tipos (conforme a BD)
 export interface ScanResult {
   id: string;
   target_url: string;
@@ -11,8 +12,8 @@ export interface ScanResult {
   findings: any[];           
 }
 
+// Faz o request HTTP, verifica se correu bem, se sim, devolve os dados em JSON
 async function safeFetch(endpoint: string, options: RequestInit = {}) {
-  // Constrói a URL de forma segura
   const url = `${API_BASE}/api/${endpoint}`;
   
   const response = await fetch(url, options);
@@ -25,6 +26,7 @@ async function safeFetch(endpoint: string, options: RequestInit = {}) {
   return await response.json();
 }
 
+// Função que vai faz o fetch dos scans da API. Devolve um array com vários scans.
 export async function fetchScans(): Promise<ScanResult[]> {
   try {
     const data = await safeFetch("scans");
@@ -46,9 +48,8 @@ export async function fetchScans(): Promise<ScanResult[]> {
   }
 }
 
+// Função que inicia um scan. Recebe uma URL, envia-a para a API, cria um novo scan e devolve o resultado do mesmo.
 export async function startScan(url: string): Promise<ScanResult> {
-  // O scanner exige 'base_url' e 'target_url'. 
-  // Se a 'base_url' for a própria URL que estás a scanear, envia-a nos dois campos.
   const payload = { 
     target_url: url,
     base_url: url 
