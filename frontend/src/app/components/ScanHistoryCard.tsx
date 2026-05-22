@@ -4,7 +4,7 @@ export interface ScanData {
   id: string;
   url: string;
   timestamp: Date;
-  riskScore: number;
+  score: number;
   vulnerabilities: number;
   status: "completed" | "in-progress" | "failed";
 }
@@ -15,21 +15,21 @@ interface ScanHistoryCardProps {
 }
 
 export function ScanHistoryCard({ scan, onClick }: ScanHistoryCardProps) {
-  const getRiskColor = (score: number) => {
-    if (score >= 30) return "text-red-600";
-    if (score >= 50) return "text-orange-600";
-    if (score >= 80) return "text-yellow-600";
-    return "text-green-600";
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return "text-green-600";
+    if (score >= 50) return "text-yellow-600";
+    if (score >= 30) return "text-orange-600";
+    return "text-red-600";
   };
 
   const getRiskBadge = (score: number) => {
-    if (score >= 30) return { label: "Critical", bg: "bg-red-100", text: "text-red-700" };
-    if (score >= 50) return { label: "High", bg: "bg-orange-100", text: "text-orange-700" };
-    if (score >= 80) return { label: "Medium", bg: "bg-yellow-100", text: "text-yellow-700" };
-    return { label: "Low", bg: "bg-green-100", text: "text-green-700" };
+    if (score >= 80) return { label: "Low", bg: "bg-green-100", text: "text-green-700" };
+    if (score >= 50) return { label: "Medium", bg: "bg-yellow-100", text: "text-yellow-700" };
+    if (score >= 30) return { label: "High", bg: "bg-orange-100", text: "text-orange-700" };
+    return { label: "Critical", bg: "bg-red-100", text: "text-red-700" };
   };
 
-  const badge = getRiskBadge(scan.riskScore);
+  const badge = getRiskBadge(scan.score);
 
   return (
     <div
@@ -58,8 +58,8 @@ export function ScanHistoryCard({ scan, onClick }: ScanHistoryCardProps) {
         <div className="flex items-center gap-4">
           <div>
             <p className="text-xs text-muted-foreground">Risk Score</p>
-            <p className={`text-lg ${getRiskColor(scan.riskScore)}`}>
-              {scan.riskScore}/100
+            <p className={`text-lg ${getScoreColor(scan.score)}`}>
+              {scan.score}/100
             </p>
           </div>
           <div>
