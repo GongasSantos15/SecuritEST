@@ -42,7 +42,7 @@ export default function App() {
 
     fetchScans()
       .then((results) => {
-        setScans(results.map(toScanData));
+        setScans(results.filter((s: any) => s.status === "completed").map(toScanData));
       })
       .catch(() => setScans([]))
       .finally(() => setLoading(false));
@@ -158,6 +158,20 @@ export default function App() {
                 />
               ))
             )}
+          </div>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-8">
+            <h4 className="text-foreground mb-2">Azure Cloud Architecture</h4>
+            <p className="text-sm text-muted-foreground mb-4">
+              This scan was powered by a cloud-native architecture on Microsoft Azure, featuring:
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+              {["Azure Container Instances", "Azure Functions (Serverless)", "Azure Cosmos DB (NoSQL)", "Azure DevOps CI/CD"].map((item) => (
+                <div key={item} className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-blue-600" />
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </main>
       </div>
