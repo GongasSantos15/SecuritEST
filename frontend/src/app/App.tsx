@@ -5,7 +5,7 @@ import { ScanForm } from "./components/ScanForm";
 import { ScanHistoryCard, ScanData } from "./components/ScanHistoryCard";
 import { VulnerabilityCard } from "./components/VulnerabilityCard";
 import { RiskScoreGauge } from "./components/RiskScoreGauge";
-import { fetchScans, startScan, ScanResult } from "../services/api";
+import { fetchScans, startScan } from "../services/api";
 import {
   Activity,
   AlertTriangle,
@@ -23,19 +23,16 @@ function toScanData(s: any): ScanData {
     id: s.id || s.scan_id,
     url: s.target_url || s.url || "URL não especificada",
     timestamp: s.started_at ? new Date(s.started_at) : new Date(),
-    riskScore: typeof s.final_score === "number" ? Math.round(s.final_score) : 0,
+    riskScore: Math.round(Number(s.final_score) || 0),
     vulnerabilities: Array.isArray(s.findings)
       ? s.findings.length
-      : typeof s.findings_count === "number"
-        ? s.findings_count
-        : 0,
+      : Number(s.findings_count) || 0,
     status: s.status || "completed"
   };
 }
 
 export default function App() {
   const [scans, setScans] = useState<ScanData[]>([]);
-  const [scanDetails, setScanDetails] = useState<Record<string, ScanResult>>({});
   const [selectedScan, setSelectedScan] = useState<ScanData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -43,23 +40,10 @@ export default function App() {
     setLoading(true);
 
     fetchScans()
-      .then((results: ScanResult[]) => {
-        const mappedScans: ScanData[] = results.map((s: any) => toScanData(s));
-
-        const details: Record<string, ScanResult> = {};
-
-        results.forEach((s: any) => {
-          const id = s.id || s.scan_id;
-          if (id) details[id] = s;
-        });
-
-        setScans(mappedScans);
-        setScanDetails(details);
+      .then((results) => {
+        setScans(results.map(toScanData));
       })
-      .catch((err: unknown) => {
-        console.error("Erro ao carregar scans da API:", err);
-        setScans([]);
-      })
+      .catch(() => setScans([]))
       .finally(() => setLoading(false));
   }, []);
 
@@ -68,101 +52,73 @@ export default function App() {
       const created = await startScan(url);
       const scanId = created?.scan_id || created?.id;
 
-      if (!scanId) {
-        throw new Error("No scan_id returned from API");
-      }
+      if (!scanId) throw new Error("No scan_id returned");
 
-      let completedScan: any = null;
-      let updatedResults: any[] = [];
+      let completed = null;
 
       for (let i = 0; i < 30; i++) {
         await new Promise((r) => setTimeout(r, 2000));
 
-        updatedResults = await fetchScans();
+        const results = await fetchScans();
 
-        completedScan = updatedResults.find(
+        setScans(results.map(toScanData));
+
+        completed = results.find(
           (s: any) =>
             (s.id || s.scan_id) === scanId && s.status === "completed"
         );
 
-        if (completedScan) break;
+        if (completed) {
+          setSelectedScan(toScanData(completed));
+          break;
+        }
       }
-
-      const mappedScans: ScanData[] = updatedResults.map((s: any) =>
-        toScanData(s)
-      );
-
-      const details: Record<string, any> = {};
-
-      updatedResults.forEach((s: any) => {
-        const id = s.id || s.scan_id;
-        details[id] = s;
-      });
-
-      setScans(mappedScans);
-      setScanDetails(details);
-
-      if (completedScan) {
-        setSelectedScan(toScanData(completedScan));
-      }
-    } catch (err: any) {
+    } catch (err) {
       console.error("Erro no Scan:", err);
     }
   };
 
-  const totalVulnerabilities: number = scans.reduce(
-    (sum: number, s: ScanData) => sum + (s.vulnerabilities || 0),
+  const totalVulnerabilities = scans.reduce(
+    (sum: number, s: ScanData) => sum + s.vulnerabilities,
     0
   );
 
-  const avgRiskScore: number = scans.length
+  const avgRiskScore = scans.length
     ? Math.round(
         scans.reduce(
           (sum: number, s: ScanData) => sum + (Number(s.riskScore) || 0),
           0
         ) / scans.length
       )
-    : 0;
+  : 0;
 
-  // ─── Vista detalhe ────────────────────────────────────────────────────────
+  // ─── DETALHE ─────────────────────────────────────────────
   if (selectedScan) {
-    const detail = selectedScan ? scanDetails[selectedScan.id] : null;
-    const findings = Array.isArray(detail?.findings) ? detail.findings : [];
+    const findings = (selectedScan as any).findings || [];
 
     return (
       <div className="min-h-screen bg-background">
         <Header />
         <main className="container mx-auto px-6 py-8">
+
           <button
             onClick={() => setSelectedScan(null)}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Dashboard
           </button>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <div className="lg:col-span-2">
-              <div className="bg-card border border-border rounded-lg p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h2 className="mb-2">Scan Report</h2>
-                    <p className="text-sm text-muted-foreground break-all">{selectedScan.url}</p>
-                    <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                      <Clock className="w-3 h-3" />
-                      {selectedScan.timestamp.toLocaleString()}
-                    </div>
-                  </div>
+            <div className="lg:col-span-2 bg-card border border-border rounded-lg p-6">
+              <h2 className="mb-2">Scan Report</h2>
+              <p className="text-sm text-muted-foreground break-all">
+                {selectedScan.url}
+              </p>
 
-                  <div className="flex gap-2">
-                    <button className="p-2 rounded-lg border border-border hover:bg-accent transition-colors">
-                      <Download className="w-4 h-4" />
-                    </button>
-                    <button className="p-2 rounded-lg border border-border hover:bg-accent transition-colors">
-                      <Share2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
+              <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                <Clock className="w-3 h-3" />
+                {selectedScan.timestamp.toLocaleString()}
               </div>
             </div>
 
@@ -171,54 +127,43 @@ export default function App() {
             </div>
           </div>
 
-          <h3 className="mb-4">Vulnerabilities Detected ({findings.length})</h3>
+          <h3 className="mb-4">
+            Vulnerabilities Detected ({findings.length})
+          </h3>
 
           <div className="space-y-4">
             {findings.length === 0 ? (
-              <p className="text-muted-foreground italic">No vulnerabilities found.</p>
+              <p className="text-muted-foreground italic">
+                No vulnerabilities found.
+              </p>
             ) : (
               findings.map((f: any, index: number) => (
                 <VulnerabilityCard
-                  key={`${selectedScan.id}-${f.id}-${f.endpoint}-${index}`}
+                  key={`${selectedScan.id}-${index}`}
                   vulnerability={{
                     id: f.id || `${selectedScan.id}-${index}`,
-                    title: f.name || f.title || "Unknown Vulnerability",
+                    title: f.name || "Unknown",
                     severity:
                       Number(f.severity) >= 7
                         ? "critical"
                         : Number(f.severity) >= 4
-                          ? "medium"
-                          : "low",
-                    category: f.owasp || f.category || "General",
-                    description: f.evidence || f.description || "No description provided.",
-                    endpoint: f.endpoint || "Unknown endpoint",
-                    recommendation: f.recommendation || "No recommendation."
+                        ? "medium"
+                        : "low",
+                    category: f.owasp || "General",
+                    description: f.evidence || "No description",
+                    endpoint: f.endpoint || "Unknown",
+                    recommendation: f.recommendation || "No recommendation"
                   }}
                 />
               ))
             )}
-          </div>
-
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-8">
-            <h4 className="text-foreground mb-2">Azure Cloud Architecture</h4>
-            <p className="text-sm text-muted-foreground mb-4">
-              This scan was powered by a cloud-native architecture on Microsoft Azure, featuring:
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-              {["Azure Container Instances", "Azure Functions (Serverless)", "Azure Cosmos DB (NoSQL)", "Azure DevOps CI/CD"].map((item) => (
-                <div key={item} className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-blue-600" />
-                  <span>{item}</span>
-                </div>
-              ))}
-            </div>
           </div>
         </main>
       </div>
     );
   }
 
-  // ─── Dashboard ────────────────────────────────────────────────────────────
+  // ─── DASHBOARD ─────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -234,40 +179,27 @@ export default function App() {
           <StatsCard title="Avg Risk Score" value={avgRiskScore} icon={TrendingUp} />
           <StatsCard
             title="APIs Secured"
-            value={scans.filter((s: ScanData) => s.riskScore > 80).length}
+            value={scans.filter((s) => s.riskScore > 80).length}
             icon={CheckCircle}
           />
         </div>
 
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h3>Recent Scans</h3>
-            <button className="text-sm text-primary hover:underline">View All</button>
-          </div>
-
-          {loading && scans.length === 0 ? (
-            <div className="flex items-center justify-center py-16 text-muted-foreground gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {loading ? (
+            <div className="flex items-center gap-3 text-muted-foreground">
               <Loader2 className="w-5 h-5 animate-spin" />
               Loading scans...
             </div>
-          ) : scans.length === 0 ? (
-            <div className="text-center py-16 text-muted-foreground">
-              <Activity className="w-10 h-10 mx-auto mb-3 opacity-40" />
-              <p>No scans yet. Submit an API URL to get started.</p>
-            </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {scans.map((scan) => (
-                <ScanHistoryCard
-                  key={scan.id}
-                  scan={scan}
-                  onClick={() => setSelectedScan(scan)}
-                />
-              ))}
-            </div>
+            scans.map((scan) => (
+              <ScanHistoryCard
+                key={scan.id}
+                scan={scan}
+                onClick={() => setSelectedScan(scan)}
+              />
+            ))
           )}
         </div>
-
         <div className="mt-8 bg-card border border-border rounded-lg p-6">
           <h3 className="mb-4">About SecuritEST</h3>
           <p className="text-sm text-muted-foreground mb-4">
