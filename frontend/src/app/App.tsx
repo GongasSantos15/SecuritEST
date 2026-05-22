@@ -69,34 +69,45 @@ export default function App() {
     try {
       await startScan(url);
 
-      await new Promise<void>((resolve) => setTimeout(resolve, 2000));
+      let updatedResults: any[] = [];
+      let newestCompletedScan: any = null;
 
-      const updatedResults: ScanResult[] = await fetchScans();
+      // polling até o scan ficar "completed"
+      for (let i = 0; i < 20; i++) {
+        await new Promise((r) => setTimeout(r, 2000));
+
+        updatedResults = await fetchScans();
+
+        newestCompletedScan = updatedResults
+          .filter((s: any) => s.status === "completed")
+          .sort(
+            (a: any, b: any) =>
+              new Date(b.started_at).getTime() - new Date(a.started_at).getTime()
+          )[0];
+
+        if (newestCompletedScan) break;
+      }
 
       const mappedScans: ScanData[] = updatedResults.map((s: any) =>
         toScanData(s)
       );
 
-      const details: Record<string, ScanResult> = {};
+      const details: Record<string, any> = {};
 
       updatedResults.forEach((s: any) => {
         const id = s.id || s.scan_id;
-        if (id) details[id] = s;
+        details[id] = s;
       });
 
       setScans(mappedScans);
       setScanDetails(details);
 
-      const newestScan = mappedScans.reduce(
-        (latest: ScanData, current: ScanData) =>
-          new Date(current.timestamp) > new Date(latest.timestamp)
-            ? current
-            : latest
-      );
+      if (newestCompletedScan) {
+        setSelectedScan(toScanData(newestCompletedScan));
+      }
 
-      setSelectedScan(newestScan);
       setApiOffline(false);
-    } catch (err: unknown) {
+    } catch (err: any) {
       console.error("Erro no Scan:", err);
       setApiOffline(true);
     }
@@ -190,7 +201,7 @@ export default function App() {
             )}
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-2">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-4">
             <h4 className="text-foreground mb-2">Azure Cloud Architecture</h4>
             <p className="text-sm text-muted-foreground mb-4">
               This scan was powered by a cloud-native architecture on Microsoft Azure, featuring:
@@ -269,6 +280,18 @@ export default function App() {
             It automatically analyzes exposed APIs, identifies potential vulnerabilities based on
             OWASP API Security Top 10, and generates comprehensive risk reports.
           </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            {[
+              { title: "Container-Based", desc: "Scalable scanning engine deployed in Azure Container Instances" },
+              { title: "Serverless Computing", desc: "Azure Functions handle request processing and report generation" },
+              { title: "NoSQL Storage", desc: "Cosmos DB stores scan history and vulnerability data at scale" }
+            ].map((item) => (
+              <div key={item.title} className="bg-accent rounded-lg p-4">
+                <h4 className="mb-2">{item.title}</h4>
+                <p className="text-muted-foreground">{item.desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </main>
     </div>
