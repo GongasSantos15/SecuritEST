@@ -115,15 +115,23 @@ export default function App() {
           </button>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <div className="lg:col-span-2 bg-card border border-border rounded-lg p-6">
-              <h2 className="mb-2">Scan Report</h2>
-              <p className="text-sm text-muted-foreground break-all">
-                {selectedScan.url}
-              </p>
-
-              <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                <Clock className="w-3 h-3" />
-                {selectedScan.timestamp.toLocaleString()}
+            <div className="lg:col-span-2">
+              <div className="bg-card border border-border rounded-lg p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <h2 className="mb-2">Scan Report</h2>
+                    <p className="text-sm text-muted-foreground break-all">{selectedScan.url}</p>
+                    <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                      <Clock className="w-3 h-3" />
+                      {selectedScan.timestamp.toLocaleString()}
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button className="p-2 rounded-lg border border-border hover:bg-accent transition-colors">
+                      <Download className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
