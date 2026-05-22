@@ -47,21 +47,24 @@ useEffect(() => {
   
   fetchScans()
     .then((results) => {
-      // Mapeamento direto dos dados vindos do Azure
       const mappedScans: ScanData[] = results.map((s: any) => ({
         id: s.id,
         url: s.target_url || "URL não especificada",
         timestamp: s.started_at ? new Date(s.started_at) : new Date(),
-        riskScore: typeof s.final_score === 'number' ? s.final_score : 0,
+        riskScore: typeof s.final_score === 'number' ? Math.round(s.final_score) : 0,
         vulnerabilities: typeof s.findings_count === 'number' ? s.findings_count : 0,
         status: s.status || "completed"
       }));
 
+      const details: Record<string, any> = {};
+      results.forEach((s: any) => (details[s.id] = s));
+
       setScans(mappedScans);
+      setScanDetails(details);
     })
     .catch(err => {
       console.error("Erro ao carregar scans da API:", err);
-      setScans([]); // Estado vazio em caso de erro
+      setScans([]);
     })
     .finally(() => setLoading(false));
 }, []);
