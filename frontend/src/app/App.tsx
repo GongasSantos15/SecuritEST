@@ -62,9 +62,13 @@ export default function App() {
 
         const results = await fetchScans();
 
-        setScans(results.map(toScanData));
+        const completedOnly = results
+          .filter((s: any) => s.status === "completed")
+          .map(toScanData);
 
-        completed = results.find(
+        setScans(completedOnly);
+
+        const completed = results.find(
           (s: any) =>
             (s.id || s.scan_id) === scanId && s.status === "completed"
         );
