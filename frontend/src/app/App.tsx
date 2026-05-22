@@ -20,43 +20,17 @@ import {
 } from "lucide-react";
 
 function toScanData(s: any): ScanData {
-  const findings = Array.isArray(s.findings)
-    ? s.findings
-    : Array.isArray(s.vulnerabilities)
-      ? s.vulnerabilities
-      : [];
-
   return {
-    id: s.id || s.scan_id,
-
-    url:
-      s.target_url ||
-      s.url ||
-      "URL não especificada",
-
-    timestamp:
-      s.started_at
-        ? new Date(s.started_at)
-        : s.timestamp
-          ? new Date(s.timestamp)
-          : new Date(),
-
-    riskScore:
-      typeof s.final_score === "number"
-        ? Math.round(s.final_score)
-        : typeof s.riskScore === "number"
-          ? Math.round(s.riskScore)
-          : 0,
-
-    vulnerabilities:
-      findings.length > 0
-        ? findings.length
-        : typeof s.findings_count === "number"
-          ? s.findings_count
-          : typeof s.vulnerabilityCount === "number"
-            ? s.vulnerabilityCount
-            : 0,
-
+    id: s.id,
+    // Mapeamos 'target_url' para 'url'
+    url: s.target_url || "URL não especificada",
+    // Mapeamos 'started_at' para o formato Date
+    timestamp: s.started_at ? new Date(s.started_at) : new Date(),
+    // Mapeamos 'final_score' (número) para 'riskScore'
+    riskScore: typeof s.final_score === 'number' ? s.final_score : 0,
+    // Mapeamos 'findings_count' (número) para 'vulnerabilities'
+    vulnerabilities: typeof s.findings_count === 'number' ? s.findings_count : 0,
+    // Status vem diretamente da API
     status: s.status || "completed"
   };
 }
@@ -112,14 +86,12 @@ useEffect(() => {
     try {
       const result = await startScan(url);
       const scanData = toScanData(result);
-
-      setScans((prev) => [scanData, ...prev]);
-
-      setScanDetails((prev) => ({
-        ...prev,
-        [result.id]: result
-      }));
-
+      setScans((prev) => {
+        const updated = [scanData, ...prev];
+        const updatedDetails = { ...scanDetails, [result.id]: result };
+        setScanDetails(updatedDetails);
+        return updated;
+      });
       setSelectedScan(scanData);
       setApiOffline(false);
     } catch (err: any) {
@@ -140,10 +112,7 @@ useEffect(() => {
       setScans((prev) => {
         const updated = [scanData, ...prev];
         const updatedDetails = { ...scanDetails, [localId]: localResult };
-        setScanDetails((prev) => ({
-          ...prev,
-          [result.id]: result
-        }));
+        setScanDetails(updatedDetails);
         return updated;
       });
       setSelectedScan(scanData);
