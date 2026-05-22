@@ -3,10 +3,10 @@ const API_BASE = (import.meta.env.VITE_API_URL || "https://func-securitest-x7wdl
 
 export interface ScanResult {
   id: string;
-  target_url: string;        // Deve coincidir com o JSON
-  started_at: string;        // Deve coincidir com o JSON
-  final_score: number;       // Deve coincidir com o JSON
-  findings_count: number;    // Deve coincidir com o JSON
+  target_url: string;
+  started_at: string;
+  final_score: number;
+  findings_count: number;
   status: "completed" | "in-progress" | "failed";
   findings: any[];           
 }
@@ -28,16 +28,18 @@ async function safeFetch(endpoint: string, options: RequestInit = {}) {
 export async function fetchScans(): Promise<ScanResult[]> {
   try {
     const data = await safeFetch("scans");
-    
-    // LOG DE SEGURANÇA: Abre a consola (F12) e vê o que aparece aqui
-    console.log("Dados recebidos da API:", data); 
+
+    console.log("Dados recebidos da API:", data);
 
     if (!data) return [];
 
-    // Tenta normalizar: se for um array, usa-o. Se for um objeto com uma propriedade de lista, usa-a.
-    const results = Array.isArray(data) ? data : (data.scans || Object.values(data));
-    
-    return results;
+    if (Array.isArray(data)) return data;
+
+    if (Array.isArray(data.items)) return data.items;
+
+    if (Array.isArray(data.scans)) return data.scans;
+
+    return [];
   } catch (err) {
     console.error("Erro crítico no fetchScans:", err);
     return [];

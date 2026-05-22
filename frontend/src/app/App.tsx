@@ -47,17 +47,19 @@ useEffect(() => {
   
   fetchScans()
     .then((results) => {
-      const mappedScans: ScanData[] = results.map((s: any) => ({
-        id: s.id,
-        url: s.target_url || "URL não especificada",
-        timestamp: s.started_at ? new Date(s.started_at) : new Date(),
-        riskScore: typeof s.final_score === 'number' ? Math.round(s.final_score) : 0,
-        vulnerabilities: typeof s.findings_count === 'number' ? s.findings_count : 0,
-        status: s.status || "completed"
-      }));
+    const mappedScans: ScanData[] = results.map((s: any) => ({
+      id: s.id,
+      url: s.target_url || "URL não especificada",
+      timestamp: s.started_at ? new Date(s.started_at) : new Date(),
+      riskScore: typeof s.final_score === "number" ? Math.round(s.final_score) : 0,
+      vulnerabilities: typeof s.findings_count === "number" ? s.findings_count : 0,
+      status: s.status || "completed"
+    }));
 
       const details: Record<string, any> = {};
-      results.forEach((s: any) => (details[s.id] = s));
+      results.forEach((s: any) => {
+      details[s.id  s.scan_id] = s;
+    });
 
       setScans(mappedScans);
       setScanDetails(details);
