@@ -59,7 +59,7 @@ export function ScanHistoryCard({ scan, onClick }: ScanHistoryCardProps) {
           <div>
             <p className="text-xs text-muted-foreground">Score</p>
             <p className={`text-lg ${getScoreColor(scan.riskScore)}`}>
-              {scan.score}/100
+              {scan.riskScore}/100
             </p>
           </div>
           <div>
