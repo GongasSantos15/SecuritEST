@@ -238,7 +238,7 @@ useEffect(() => {
           <StatsCard title="Total Scans" value={scans.length} icon={Activity} />
           <StatsCard title="Vulnerabilities Found" value={totalVulnerabilities} icon={AlertTriangle} />
           <StatsCard title="Avg Risk Score" value={avgRiskScore} icon={TrendingUp} />
-          <StatsCard title="APIs Secured" value={scans.filter((s) => s.riskScore < 30).length} icon={CheckCircle} />
+          <StatsCard title="APIs Secured" value={scans.filter((s: ScanData) => s.riskScore > 80).length} icon={CheckCircle} />
         </div>
 
         <div>
